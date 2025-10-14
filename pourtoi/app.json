@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "pourtoi",
+    "slug": "pourtoi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/pourtois.png",
+    "splash": {
+      "image": "./assets/pourtois.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
