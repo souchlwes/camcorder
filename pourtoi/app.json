@@ -12,6 +12,12 @@
     },
     "assetBundlePatterns": [
       "**/*"
-    ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.anonymous.pourtoi"
+    },
+    "android": {
+      "package": "com.anonymous.pourtoi"
+    }
   }
 }
