@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Y2K Camcorder - PWA Edition</title>
     
-    <!-- Link to the Web App Manifest for Home Screen Installation -->
     <link rel="manifest" href="manifest.json">
     
     <style>
@@ -33,16 +32,19 @@
             box-shadow: inset 0 0 30px rgba(0,0,0,0.5); position: relative;
         }
 
+        /* FIXED: Better layout and spacing for the left panel */
         .left-panel {
             width: 15%; height: 100%; background: linear-gradient(90deg, #555, #888);
-            border-right: 4px solid #444; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 20px; box-sizing: border-box; box-shadow: inset -5px 0 10px rgba(0,0,0,0.5);
+            border-right: 4px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px 10px; box-sizing: border-box; box-shadow: inset -5px 0 10px rgba(0,0,0,0.5);
+            gap: 25px; z-index: 10;
         }
 
-        .center-screen-area { width: 65%; display: flex; justify-content: center; align-items: center; }
+        /* FIXED: Reduced width and added margin to prevent overlap */
+        .center-screen-area { width: 60%; display: flex; justify-content: center; align-items: center; margin: 0 2%; }
 
         .screen-bezel {
-            background: #111; padding: 20px; border-radius: 8px;
+            background: #111; padding: 20px; border-radius: 8px; width: 100%;
             box-shadow: inset 0 0 15px #000, 0 5px 15px rgba(0,0,0,0.8);
             position: relative; height: 85vh; aspect-ratio: 4 / 3;
         }
@@ -54,7 +56,7 @@
             background-image: repeating-linear-gradient(45deg, #1a1a1a 0, #1a1a1a 2px, #222 2px, #222 6px);
             border-left: 6px solid #111; border-radius: 40px 0 0 40px; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 40px;
-            box-shadow: inset 10px 0 20px rgba(0,0,0,0.8);
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.8); z-index: 10;
         }
 
         .camcorder-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border-radius: 4px; }
@@ -80,17 +82,18 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes batteryFlicker { 0%, 98%, 100% { opacity: 1; } 99% { opacity: 0.3; } }
         
+        /* FIXED: Clean, square, text-only hardware buttons */
         .sleek-btn {
             background: linear-gradient(180deg, #e0e0e0, #a0a0a0);
-            border: 1px solid #555; border-radius: 15px; padding: 8px 12px; margin: 5px 0;
-            color: #333; font-family: Arial, sans-serif; font-weight: bold; font-size: 11px;
+            border: 1px solid #444; border-radius: 4px; padding: 12px 5px; margin: 0; width: 90%;
+            color: #222; font-family: Arial, sans-serif; font-weight: bold; font-size: 11px;
             box-shadow: 0 3px 5px rgba(0,0,0,0.4), inset 0 1px 1px #fff;
-            cursor: pointer; touch-action: none; text-transform: uppercase;
+            cursor: pointer; touch-action: none; text-transform: uppercase; text-align: center;
         }
         .sleek-btn:active { box-shadow: 0 1px 1px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.4); transform: translateY(2px); }
 
-        .zoom-rocker { display: flex; flex-direction: column; background: #111; padding: 4px; border-radius: 20px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); }
-        .zoom-rocker .sleek-btn { border-radius: 10px; margin: 2px; padding: 15px 12px; font-size: 14px; }
+        .zoom-rocker { display: flex; flex-direction: column; background: #111; padding: 6px; border-radius: 8px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); width: 60%; }
+        .zoom-rocker .sleek-btn { border-radius: 4px; margin: 3px 0; padding: 15px 0; font-size: 14px; width: 100%; }
 
         .record-wrapper { background: #111; padding: 6px; border-radius: 50%; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); }
         .phys-record-btn {
@@ -115,9 +118,10 @@
 
     <div class="hardware-body">
         <div class="left-panel">
-            <button class="sleek-btn" id="btn-flip">↺ LENS</button>
-            <button class="sleek-btn" id="btn-nightshot" style="color: #004400;">◐ NIGHT</button>
-            <button class="sleek-btn" id="btn-date">📅 DATE</button> 
+            <!-- FIXED: Emojis removed, clean labels -->
+            <button class="sleek-btn" id="btn-flip">LENS</button>
+            <button class="sleek-btn" id="btn-nightshot" style="color: #222;">NIGHTSHOT</button>
+            <button class="sleek-btn" id="btn-date">DATE</button> 
         </div>
 
         <div class="center-screen-area">
@@ -145,6 +149,7 @@
 
         <div class="right-grip">
             <div class="zoom-rocker">
+                <!-- FIXED: Clean labels -->
                 <button class="sleek-btn" id="btn-zoom-in">T</button>
                 <button class="sleek-btn" id="btn-zoom-out">W</button>
             </div>
@@ -205,7 +210,7 @@
         btnNightshot.addEventListener('click', (e) => {
             if(!rawStream) return;
             isNightShot = !isNightShot;
-            btnNightshot.style.color = isNightShot ? '#00ff00' : '#004400';
+            btnNightshot.style.color = isNightShot ? '#00ff00' : '#222'; // Fixed initial color
             btnNightshot.style.background = isNightShot ? 'linear-gradient(180deg, #555, #333)' : 'linear-gradient(180deg, #e0e0e0, #a0a0a0)';
             nsOverlay.style.display = isNightShot ? 'block' : 'none';
             playTapeMechanicalSound('click'); 
@@ -408,7 +413,6 @@
             }
         }
 
-        // UPGRADED EXPORT FUNCTION (Uses Web Share API for native saving)
         async function exportVideo() {
             const mimeType = mediaRecorder.mimeType || 'video/webm';
             const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
@@ -443,7 +447,6 @@
 
         setInterval(updateTimestamp, 1000); updateTimestamp();
 
-        // NEW: REGISTER SERVICE WORKER FOR OFFLINE PWA FUNCTIONALITY
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
