@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Y2K Camcorder - PWA Edition</title>
+    
+    <!-- Link to the Web App Manifest for Home Screen Installation -->
+    <link rel="manifest" href="manifest.json">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        
+        body { 
+            margin: 0; padding: 0; background-color: #050505; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; width: 100vw; overflow: hidden; 
+            font-family: 'VT323', monospace; color: #fff; user-select: none; 
+        }
+
+        #rotate-warning {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; color: #fff; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-family: Arial, sans-serif; font-size: 20px; text-align: center;
+        }
+        @media screen and (orientation: landscape) { #rotate-warning { display: none !important; } }
+
+        .hardware-body {
+            width: 100%; height: 100%; max-width: 1200px; max-height: 800px;
+            background: linear-gradient(180deg, #d4d4d4 0%, #a6a6a6 50%, #757575 100%);
+            display: flex; flex-direction: row; justify-content: space-between; align-items: center;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5); position: relative;
+        }
+
+        .left-panel {
+            width: 15%; height: 100%; background: linear-gradient(90deg, #555, #888);
+            border-right: 4px solid #444; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            padding-bottom: 20px; box-sizing: border-box; box-shadow: inset -5px 0 10px rgba(0,0,0,0.5);
+        }
+
+        .center-screen-area { width: 65%; display: flex; justify-content: center; align-items: center; }
+
+        .screen-bezel {
+            background: #111; padding: 20px; border-radius: 8px;
+            box-shadow: inset 0 0 15px #000, 0 5px 15px rgba(0,0,0,0.8);
+            position: relative; height: 85vh; aspect-ratio: 4 / 3;
+        }
+
+        .brand-logo { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); font-family: 'Arial Black', sans-serif; font-size: 12px; color: #666; letter-spacing: 3px; }
+
+        .right-grip {
+            width: 20%; height: 100%; background: #222;
+            background-image: repeating-linear-gradient(45deg, #1a1a1a 0, #1a1a1a 2px, #222 2px, #222 6px);
+            border-left: 6px solid #111; border-radius: 40px 0 0 40px; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 40px;
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.8);
+        }
+
+        .camcorder-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border-radius: 4px; }
+        
+        video { position: absolute; opacity: 0; pointer-events: none; }
+        canvas { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+        
+        .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04)); background-size: 100% 4px, 3px 100%; z-index: 2; }
+        .vignette { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%); z-index: 3; }
+        .noise-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); opacity: 0.15; mix-blend-mode: overlay; z-index: 4; }
+        .nightshot-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-color: rgba(50, 255, 50, 0.1); display: none; z-index: 4; mix-blend-mode: overlay; }
+        
+        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 15px; box-sizing: border-box; text-shadow: 2px 2px 0px #000; font-size: 22px; letter-spacing: 1px; display: none; z-index: 10; }
+        .top-left { position: absolute; top: 15px; left: 15px; display: flex; align-items: center;}
+        .top-right { position: absolute; top: 15px; right: 15px; text-align: right; }
+        .bottom-left { position: absolute; bottom: 15px; left: 15px; color: #ffeb3b; }
+        .bottom-right { position: absolute; bottom: 15px; right: 15px; color: #ffeb3b; }
+        .rec-dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; margin-right: 8px; display: none; }
+        .is-recording .rec-dot { display: block; animation: blink 1s step-end infinite; }
+        .is-recording #status-text { color: #ff0000; }
+        .battery { animation: batteryFlicker 10s infinite; display: block; margin-bottom: 15px; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes batteryFlicker { 0%, 98%, 100% { opacity: 1; } 99% { opacity: 0.3; } }
+        
+        .sleek-btn {
+            background: linear-gradient(180deg, #e0e0e0, #a0a0a0);
+            border: 1px solid #555; border-radius: 15px; padding: 8px 12px; margin: 5px 0;
+            color: #333; font-family: Arial, sans-serif; font-weight: bold; font-size: 11px;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.4), inset 0 1px 1px #fff;
+            cursor: pointer; touch-action: none; text-transform: uppercase;
+        }
+        .sleek-btn:active { box-shadow: 0 1px 1px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.4); transform: translateY(2px); }
+
+        .zoom-rocker { display: flex; flex-direction: column; background: #111; padding: 4px; border-radius: 20px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); }
+        .zoom-rocker .sleek-btn { border-radius: 10px; margin: 2px; padding: 15px 12px; font-size: 14px; }
+
+        .record-wrapper { background: #111; padding: 6px; border-radius: 50%; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); }
+        .phys-record-btn {
+            width: 45px; height: 45px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff4d4d, #b30000, #4d0000);
+            border: 1px solid #330000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.4); cursor: pointer;
+        }
+        .phys-record-btn:active, .phys-record-btn.active { box-shadow: 0 1px 2px rgba(0,0,0,0.8), inset 0 3px 6px rgba(0,0,0,0.9); transform: translateY(3px); }
+
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20; font-size: 24px; animation: pulse 2s infinite; cursor: pointer; pointer-events: auto; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="rotate-warning">
+        <div style="font-size: 40px; margin-bottom: 20px;">⟲</div>
+        Please rotate your phone<br>to Landscape mode.
+    </div>
+
+    <div class="hardware-body">
+        <div class="left-panel">
+            <button class="sleek-btn" id="btn-flip">↺ LENS</button>
+            <button class="sleek-btn" id="btn-nightshot" style="color: #004400;">◐ NIGHT</button>
+            <button class="sleek-btn" id="btn-date">📅 DATE</button> 
+        </div>
+
+        <div class="center-screen-area">
+            <div class="screen-bezel">
+                <div class="camcorder-container" id="container">
+                    <div id="start-screen">TAP TO PWR ON</div>
+                    <video id="camera-feed" autoplay playsinline muted></video>
+                    <canvas id="video-canvas" style="background-color: #000;"></canvas>
+                    
+                    <div class="scanlines"></div>
+                    <div class="vignette"></div>
+                    <div class="noise-overlay"></div>
+                    <div class="nightshot-overlay" id="ns-overlay"></div>
+                    
+                    <div class="ui-overlay" id="ui">
+                        <div class="top-left"><div class="rec-dot"></div><span id="status-text">STBY</span></div>
+                        <div class="top-right"><span class="battery">[■■■]</span></div>
+                        <div class="bottom-left"><span id="tape-speed">SP</span></div>
+                        <div class="bottom-right" id="timestamp"></div>
+                    </div>
+                </div>
+                <div class="brand-logo">DIGITAL HANDYCAM</div>
+            </div>
+        </div>
+
+        <div class="right-grip">
+            <div class="zoom-rocker">
+                <button class="sleek-btn" id="btn-zoom-in">T</button>
+                <button class="sleek-btn" id="btn-zoom-out">W</button>
+            </div>
+            <div class="record-wrapper">
+                <button class="phys-record-btn" id="btn-phys-record"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const startScreen = document.getElementById('start-screen');
+        const videoElement = document.getElementById('camera-feed');
+        const canvas = document.getElementById('video-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+        
+        const ui = document.getElementById('ui');
+        const statusText = document.getElementById('status-text');
+        const tapeSpeed = document.getElementById('tape-speed');
+        const nsOverlay = document.getElementById('ns-overlay');
+        const timestampDiv = document.getElementById('timestamp'); 
+        
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        const btnFlip = document.getElementById('btn-flip');
+        const btnNightshot = document.getElementById('btn-nightshot');
+        const btnDate = document.getElementById('btn-date'); 
+        const btnRecord = document.getElementById('btn-phys-record');
+
+        let rawStream;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        
+        let audioCtx;
+        let micSource;
+        let highpass;
+        let processedAudioDestination;
+        let hissNode;
+
+        let currentZoom = 1;
+        let zoomInterval;
+        let focusBlurAmount = 0;
+        
+        let facingMode = "environment"; 
+        let isNightShot = false;
+        let showDate = true; 
+
+        startScreen.addEventListener('click', async () => { await startCamera(); });
+        
+        btnRecord.addEventListener('click', () => { if(rawStream) toggleRecording(); });
+
+        btnFlip.addEventListener('click', (e) => {
+            if(!rawStream) return;
+            switchCamera();
+        });
+
+        btnNightshot.addEventListener('click', (e) => {
+            if(!rawStream) return;
+            isNightShot = !isNightShot;
+            btnNightshot.style.color = isNightShot ? '#00ff00' : '#004400';
+            btnNightshot.style.background = isNightShot ? 'linear-gradient(180deg, #555, #333)' : 'linear-gradient(180deg, #e0e0e0, #a0a0a0)';
+            nsOverlay.style.display = isNightShot ? 'block' : 'none';
+            playTapeMechanicalSound('click'); 
+        });
+
+        btnDate.addEventListener('click', (e) => {
+            if(!rawStream) return;
+            showDate = !showDate;
+            timestampDiv.style.display = showDate ? 'block' : 'none';
+            playTapeMechanicalSound('click');
+        });
+
+        function startZooming(direction) {
+            if (!rawStream) return;
+            if (zoomInterval) clearInterval(zoomInterval);
+            zoomInterval = setInterval(() => {
+                if (direction === 'in') currentZoom = Math.min(currentZoom + 0.03, 3.5);
+                else if (direction === 'out') currentZoom = Math.max(currentZoom - 0.03, 1.0);
+            }, 30);
+        }
+        function stopZooming() { if (zoomInterval) clearInterval(zoomInterval); }
+
+        ['mousedown', 'touchstart'].forEach(evt => {
+            btnZoomIn.addEventListener(evt, (e) => { e.preventDefault(); startZooming('in'); });
+            btnZoomOut.addEventListener(evt, (e) => { e.preventDefault(); startZooming('out'); });
+        });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            btnZoomIn.addEventListener(evt, stopZooming);
+            btnZoomOut.addEventListener(evt, stopZooming);
+        });
+
+        async function startCamera() {
+            try {
+                rawStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
+                videoElement.srcObject = rawStream;
+                startScreen.style.display = 'none';
+                ui.style.display = 'block';
+                
+                if (!audioCtx) {
+                    setupRetroAudio(); 
+                    startAutofocusHunting(); 
+                    requestAnimationFrame(processFrame);
+                } else {
+                    if (micSource) micSource.disconnect();
+                    micSource = audioCtx.createMediaStreamSource(rawStream);
+                    micSource.connect(highpass);
+                }
+            } catch (err) { alert("Camera/Mic access denied or unavailable."); }
+        }
+
+        async function switchCamera() {
+            if (rawStream) rawStream.getTracks().forEach(track => track.stop());
+            facingMode = facingMode === "environment" ? "user" : "environment";
+            await startCamera();
+        }
+
+        function startAutofocusHunting() {
+            setInterval(() => {
+                if (Math.random() > 0.7) { 
+                    focusBlurAmount = Math.random() * 2 + 1; 
+                    setTimeout(() => { focusBlurAmount = 0; }, 600 + Math.random() * 800);
+                }
+            }, 3000);
+        }
+
+        function playTapeMechanicalSound(type) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination); 
+            
+            if (type === 'start') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'stop') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'click') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(3000, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.02, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            }
+        }
+
+        function setupRetroAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            micSource = audioCtx.createMediaStreamSource(rawStream);
+            processedAudioDestination = audioCtx.createMediaStreamDestination();
+            
+            highpass = audioCtx.createBiquadFilter();
+            highpass.type = 'highpass'; highpass.frequency.value = 200; 
+            
+            const lowpass = audioCtx.createBiquadFilter();
+            lowpass.type = 'lowpass'; lowpass.frequency.value = 6000; 
+            
+            const distortion = audioCtx.createWaveShaper();
+            distortion.curve = makeDistortionCurve(5); 
+            
+            hissNode = createWhiteNoise(audioCtx);
+            const hissGain = audioCtx.createGain();
+            hissGain.gain.value = 0.015; 
+            
+            hissNode.connect(hissGain);
+            hissGain.connect(processedAudioDestination);
+            hissNode.start(); 
+            
+            micSource.connect(highpass); highpass.connect(lowpass); lowpass.connect(distortion); distortion.connect(processedAudioDestination);
+        }
+
+        function makeDistortionCurve(amount) {
+            let k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180, i = 0, x;
+            for ( ; i < n_samples; ++i ) { x = i * 2 / n_samples - 1; curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) ); }
+            return curve;
+        }
+
+        function createWhiteNoise(context) {
+            const bufferSize = context.sampleRate * 2; 
+            const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1; 
+            const whiteNoise = context.createBufferSource();
+            whiteNoise.buffer = buffer; whiteNoise.loop = true; 
+            return whiteNoise;
+        }
+
+        function processFrame() {
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                const crunchWidth = 320; const crunchHeight = 240;
+                if (canvas.width !== crunchWidth) { 
+                    canvas.width = crunchWidth; canvas.height = crunchHeight; 
+                    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                if (isNightShot) {
+                    ctx.filter = `sepia(1) hue-rotate(80deg) saturate(3) brightness(1.5) contrast(1.5) blur(${focusBlurAmount}px)`;
+                } else {
+                    ctx.filter = `contrast(1.6) saturate(1.2) brightness(1.2) sepia(0.2) blur(${focusBlurAmount}px)`;
+                }
+                
+                const sWidth = videoElement.videoWidth / currentZoom;
+                const sHeight = videoElement.videoHeight / currentZoom;
+                const sx = (videoElement.videoWidth - sWidth) / 2;
+                const sy = (videoElement.videoHeight - sHeight) / 2;
+
+                ctx.globalAlpha = isNightShot ? 0.4 : 0.6; 
+                
+                if (facingMode === 'user') {
+                    ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+                    ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                }
+                ctx.globalAlpha = 1.0;
+            }
+            if (isNightShot) setTimeout(() => { requestAnimationFrame(processFrame); }, 1000 / 15);
+            else requestAnimationFrame(processFrame);
+        }
+
+        function toggleRecording() {
+            if (!isRecording) {
+                if(audioCtx.state === 'suspended') audioCtx.resume(); 
+                playTapeMechanicalSound('start');
+
+                recordedChunks = [];
+                const canvasStream = canvas.captureStream(24);
+                const audioTracks = processedAudioDestination.stream.getAudioTracks();
+                if (audioTracks.length > 0) canvasStream.addTrack(audioTracks[0]);
+
+                mediaRecorder = new MediaRecorder(canvasStream);
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                mediaRecorder.onstop = exportVideo;
+                mediaRecorder.start();
+
+                isRecording = true;
+                container.classList.add('is-recording');
+                statusText.innerText = 'REC'; tapeSpeed.innerText = 'REC'; 
+                btnRecord.classList.add('active'); 
+            } else {
+                playTapeMechanicalSound('stop');
+                mediaRecorder.stop();
+                isRecording = false;
+                container.classList.remove('is-recording');
+                statusText.innerText = 'STBY'; tapeSpeed.innerText = 'SP';
+                btnRecord.classList.remove('active'); 
+            }
+        }
+
+        // UPGRADED EXPORT FUNCTION (Uses Web Share API for native saving)
+        async function exportVideo() {
+            const mimeType = mediaRecorder.mimeType || 'video/webm';
+            const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+            
+            const blob = new Blob(recordedChunks, { type: mimeType });
+            const file = new File([blob], `Y2K_CAM_${Date.now()}.${ext}`, { type: mimeType });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Y2K Camcorder Footage'
+                    });
+                    console.log('Video saved to device.');
+                } catch (error) {
+                    console.log('User canceled save or sharing failed.', error);
+                }
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none'; a.href = url; a.download = file.name;
+                document.body.appendChild(a); a.click();
+                setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 100);
+            }
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            const pad = (num) => String(num).padStart(2, '0');
+            timestampDiv.innerText = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        }
+
+        setInterval(updateTimestamp, 1000); updateTimestamp();
+
+        // NEW: REGISTER SERVICE WORKER FOR OFFLINE PWA FUNCTIONALITY
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Offline Mode Active'))
+                    .catch(err => console.error('Offline Mode Failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
