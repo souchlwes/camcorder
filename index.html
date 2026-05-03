@@ -17,13 +17,17 @@
             font-family: 'VT323', monospace; color: #fff; user-select: none; 
         }
 
+        /* FIXED: Hidden by default, only shows on touch devices (pointer: coarse) in portrait mode */
         #rotate-warning {
+            display: none; 
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #000; color: #fff; z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            flex-direction: column; justify-content: center; align-items: center;
             font-family: Arial, sans-serif; font-size: 20px; text-align: center;
         }
-        @media screen and (orientation: landscape) { #rotate-warning { display: none !important; } }
+        @media (pointer: coarse) and (orientation: portrait) { 
+            #rotate-warning { display: flex !important; } 
+        }
 
         .hardware-body {
             width: 100%; height: 100%; max-width: 1200px; max-height: 800px;
@@ -193,7 +197,13 @@
         let isNightShot = false;
         let showDate = true; 
 
-        startScreen.addEventListener('click', async () => { await startCamera(); });
+        // FIXED: Ensure AudioContext resumes if already created but suspended on click
+        startScreen.addEventListener('click', async () => { 
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            await startCamera(); 
+        });
         
         btnRecord.addEventListener('click', () => { if(rawStream) toggleRecording(); });
 
@@ -345,13 +355,11 @@
             return whiteNoise;
         }
 
-        // --- UPGRADED VIDEO ENGINE: Defeating the iPhone ---
         let lastFrameTime = 0;
 
         function processFrame(timestamp) {
             requestAnimationFrame(processFrame);
 
-            // Force a brutally low framerate (14fps normally, 8fps in NightShot)
             const targetFPS = isNightShot ? 8 : 14; 
             const frameInterval = 1000 / targetFPS;
 
@@ -363,7 +371,6 @@
             lastFrameTime = timestamp - (elapsed % frameInterval);
 
             if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-                // Drop resolution to guarantee chunkiness
                 const crunchWidth = 240; 
                 const crunchHeight = 180;
                 
@@ -373,15 +380,17 @@
                     ctx.fillStyle = "#000"; 
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    // CRITICAL iOS FIX: Stop Safari from blurring the pixels
+                    // FIXED: Added webkit prefix for Safari compatibility
                     ctx.imageSmoothingEnabled = false; 
+                    ctx.webkitImageSmoothingEnabled = false;
                 }
                 
-                // Aggressive Color Crushing
+                // FIXED: Moved filter from context to canvas style for iOS support
+                ctx.filter = 'none'; 
                 if (isNightShot) {
-                    ctx.filter = `sepia(1) hue-rotate(80deg) saturate(3) brightness(1.5) contrast(2.2) blur(${focusBlurAmount}px)`;
+                    canvas.style.filter = `sepia(1) hue-rotate(80deg) saturate(3) brightness(1.5) contrast(2.2) blur(${focusBlurAmount}px)`;
                 } else {
-                    ctx.filter = `contrast(2.2) saturate(1.4) brightness(1.3) sepia(0.4) blur(${focusBlurAmount}px)`;
+                    canvas.style.filter = `contrast(2.2) saturate(1.4) brightness(1.3) sepia(0.4) blur(${focusBlurAmount}px)`;
                 }
                 
                 const sWidth = videoElement.videoWidth / currentZoom;
@@ -389,7 +398,6 @@
                 const sx = (videoElement.videoWidth - sWidth) / 2;
                 const sy = (videoElement.videoHeight - sHeight) / 2;
 
-                // Heavy motion ghosting
                 ctx.globalAlpha = isNightShot ? 0.3 : 0.65; 
                 
                 if (facingMode === 'user') {
