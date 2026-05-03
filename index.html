@@ -32,13 +32,15 @@
 
         .center-screen-area { display: flex; justify-content: center; align-items: center; margin: 0; }
 
+        /* FIXED: Added box-sizing so the container respects the padding and stops bleeding out */
         .screen-bezel {
             background: #111; padding: 20px; border-radius: 8px; width: 100%;
+            box-sizing: border-box;
             box-shadow: inset 0 0 15px #000, 0 5px 15px rgba(0,0,0,0.8);
-            position: relative; 
+            position: relative; display: flex; justify-content: center; align-items: center;
         }
 
-        .brand-logo { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); font-family: 'Arial Black', sans-serif; font-size: 12px; color: #666; letter-spacing: 3px; }
+        .brand-logo { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); font-family: 'Arial Black', sans-serif; font-size: 12px; color: #666; letter-spacing: 3px; z-index: 12; }
 
         .right-grip {
             background: #222;
@@ -47,7 +49,8 @@
             box-shadow: inset 10px 0 20px rgba(0,0,0,0.8); z-index: 10;
         }
 
-        .camcorder-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border-radius: 4px; }
+        /* FIXED: Strict clipping to ensure the video stays inside the box */
+        .camcorder-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,1); }
         
         video { position: absolute; opacity: 0; pointer-events: none; }
         canvas { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
@@ -86,10 +89,6 @@
         }
 
         #focus-status, #exp-status { font-size: 18px; color: #fff; }
-        .slider-container { display: none; flex-direction: column; align-items: center; width: 60%; margin-bottom: 20px; }
-        .slider-container span { font-size: 10px; color: #888; font-family: Arial, sans-serif; margin-bottom: 5px;}
-        .osd-slider { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: #555; border-radius: 3px; outline: none; margin: 10px 0; }
-        .osd-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #ccc; cursor: pointer; }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes batteryFlicker { 0%, 98%, 100% { opacity: 1; } 99% { opacity: 0.3; } }
@@ -109,12 +108,22 @@
         }
         .sleek-btn.active-pause { background: linear-gradient(to bottom, #cca300, #997a00); color: #fff; border-top: 1px solid #ffcc00; }
 
-        .zoom-rocker { display: flex; background: #1a1a1a; padding: 4px; border-radius: 12px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); border: 1px solid #000; }
+        /* UPGRADED: Hardware Controls styling */
+        .control-group { display: flex; flex-direction: column; align-items: center; width: 60%; margin-bottom: 15px; }
+        .control-label { font-size: 10px; color: #aaa; font-family: Arial, sans-serif; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; text-shadow: 1px 1px 0 #000;}
         
+        .vertical-rocker { display: flex; flex-direction: column; background: #1a1a1a; padding: 4px; border-radius: 12px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); border: 1px solid #000; width: 100%; }
+        .vertical-rocker .sleek-btn { border-radius: 8px 8px 2px 2px; margin: 1px 0; padding: 15px 0; width: 100%; font-size: 14px;}
+        .vertical-rocker .btn-bottom { border-radius: 2px 2px 8px 8px; }
+
+        .horizontal-rocker { display: flex; flex-direction: row; background: #1a1a1a; padding: 4px; border-radius: 12px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); border: 1px solid #000; width: 100%; justify-content: center; }
+        .horizontal-rocker .sleek-btn { border-radius: 8px 2px 2px 8px; margin: 0 1px; padding: 10px 0; width: 50%; font-size: 16px; }
+        .horizontal-rocker .btn-right { border-radius: 2px 8px 8px 2px; }
+
         .record-wrapper { 
             background: linear-gradient(135deg, #e6e6e6, #888); border-radius: 50%; 
             box-shadow: inset 0 2px 5px #fff, 0 4px 6px rgba(0,0,0,0.7); border: 1px solid #555;
-            display: flex; justify-content: center; align-items: center;
+            display: flex; justify-content: center; align-items: center; margin-top: 10px;
         }
         .phys-record-btn {
             border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000); border: 2px solid #600;
@@ -132,12 +141,9 @@
             .left-panel { width: 15%; height: 100%; flex-direction: column; border-right: 4px solid #333; padding: 10px 5px; gap: 15px; }
             .center-screen-area { width: 60%; }
             .screen-bezel { height: 85vh; aspect-ratio: 4 / 3; }
-            .right-grip { width: 20%; height: 100%; flex-direction: column; border-left: 6px solid #111; border-radius: 40px 0 0 40px; gap: 30px; }
+            .right-grip { width: 20%; height: 100%; flex-direction: column; border-left: 6px solid #111; border-radius: 40px 0 0 40px; gap: 10px; }
             
             .sleek-btn { padding: 12px 5px; width: 90%; }
-            .zoom-rocker { flex-direction: column; width: 60%; }
-            .zoom-rocker .sleek-btn { border-radius: 8px 8px 2px 2px; margin: 1px 0; padding: 15px 0; width: 100%; }
-            .zoom-rocker #btn-zoom-out { border-radius: 2px 2px 8px 8px; }
             .record-wrapper { padding: 6px; }
             .phys-record-btn { width: 42px; height: 42px; }
 
@@ -155,14 +161,15 @@
             .right-grip { width: 100%; height: auto; flex-direction: row; border-top: 6px solid #111; padding: 15px 10px; justify-content: space-around; gap: 0;}
             
             .sleek-btn { padding: 10px 2px; flex: 1 1 15%; margin: 2px; font-size: 10px; } 
-            .zoom-rocker { flex-direction: row; width: 45%; }
-            .zoom-rocker .sleek-btn { border-radius: 8px 2px 2px 8px; margin: 0 1px; padding: 15px 0; }
-            .zoom-rocker #btn-zoom-out { border-radius: 2px 8px 8px 2px; }
-            .record-wrapper { width: 60px; height: 60px; margin-left: 5%; }
+            
+            .control-group { width: 25%; margin-bottom: 0; margin-right: 2%; }
+            .vertical-rocker { flex-direction: row; }
+            .vertical-rocker .sleek-btn { border-radius: 8px 2px 2px 8px; margin: 0 1px; padding: 15px 0; }
+            .vertical-rocker .btn-bottom { border-radius: 2px 8px 8px 2px; }
+            
+            .record-wrapper { width: 60px; height: 60px; margin-top: 0; margin-left: 2%; }
             .phys-record-btn { width: 46px; height: 46px; }
             
-            .slider-container { width: 45%; margin-bottom: 0; margin-right: 5%; }
-
             .ui-overlay { font-size: 18px; }
             .top-left, .top-right { top: 40px; } 
             .zoom-indicator { flex-direction: row; top: 15px; left: 50%; transform: translateX(-50%); width: 160px; justify-content: center; }
@@ -182,7 +189,6 @@
             <button class="sleek-btn" id="btn-date">DATE</button> 
             <button class="sleek-btn" id="btn-pause">PAUSE</button> 
             <button class="sleek-btn" id="btn-focus">FOCUS</button> 
-            <!-- NEW EXPOSURE BUTTON -->
             <button class="sleek-btn" id="btn-exp">EXP</button> 
         </div>
 
@@ -230,20 +236,31 @@
         </div>
 
         <div class="right-grip">
-            <div class="zoom-rocker">
-                <button class="sleek-btn" id="btn-zoom-in">T</button>
-                <button class="sleek-btn" id="btn-zoom-out">W</button>
+            <!-- ZOOM CONTROL -->
+            <div class="control-group">
+                <span class="control-label">ZOOM</span>
+                <div class="vertical-rocker">
+                    <button class="sleek-btn" id="btn-zoom-in">T</button>
+                    <button class="sleek-btn btn-bottom" id="btn-zoom-out">W</button>
+                </div>
             </div>
             
-            <div class="slider-container" id="focus-slider-container">
-                <span>MANUAL FOCUS</span>
-                <input type="range" min="0" max="6" value="0" step="0.1" class="osd-slider" id="focus-slider">
+            <!-- NEW BUTTON-BASED FOCUS CONTROL -->
+            <div class="control-group" id="focus-control-container" style="display:none;">
+                <span class="control-label">MANUAL FOCUS</span>
+                <div class="horizontal-rocker">
+                    <button class="sleek-btn" id="btn-focus-near">-</button>
+                    <button class="sleek-btn btn-right" id="btn-focus-far">+</button>
+                </div>
             </div>
 
-            <!-- NEW EXPOSURE SLIDER -->
-            <div class="slider-container" id="exp-slider-container">
-                <span>EXPOSURE (EV)</span>
-                <input type="range" min="0.5" max="2.0" value="1.0" step="0.1" class="osd-slider" id="exp-slider">
+            <!-- NEW BUTTON-BASED EXPOSURE CONTROL -->
+            <div class="control-group" id="exp-control-container" style="display:none;">
+                <span class="control-label">EXPOSURE (EV)</span>
+                <div class="horizontal-rocker">
+                    <button class="sleek-btn" id="btn-exp-down">-</button>
+                    <button class="sleek-btn btn-right" id="btn-exp-up">+</button>
+                </div>
             </div>
 
             <div class="record-wrapper">
@@ -285,13 +302,15 @@
         // Focus & Exposure Elements
         const btnFocus = document.getElementById('btn-focus');
         const focusStatus = document.getElementById('focus-status');
-        const focusSliderContainer = document.getElementById('focus-slider-container');
-        const focusSlider = document.getElementById('focus-slider');
+        const focusControlContainer = document.getElementById('focus-control-container');
+        const btnFocusNear = document.getElementById('btn-focus-near');
+        const btnFocusFar = document.getElementById('btn-focus-far');
 
         const btnExp = document.getElementById('btn-exp');
         const expStatus = document.getElementById('exp-status');
-        const expSliderContainer = document.getElementById('exp-slider-container');
-        const expSlider = document.getElementById('exp-slider');
+        const expControlContainer = document.getElementById('exp-control-container');
+        const btnExpDown = document.getElementById('btn-exp-down');
+        const btnExpUp = document.getElementById('btn-exp-up');
 
         let rawStream;
         let mediaRecorder;
@@ -314,9 +333,11 @@
         
         let focusBlurAmount = 0;
         let isManualFocus = false; 
+        let focusInterval;
         
         let exposureValue = 1.0;
         let isManualExp = false;
+        let expInterval;
 
         let isGlitching = false;
         let isBlueScreen = false;
@@ -389,76 +410,140 @@
             playTapeMechanicalSound('click');
         });
 
-        // FOCUS TOGGLE LOGIC
+        // ----------------------------------------------------
+        // FOCUS & EXPOSURE TOGGLE LOGIC
+        // ----------------------------------------------------
         btnFocus.addEventListener('click', () => {
             if(!rawStream) return;
             isManualFocus = !isManualFocus;
             if (isManualFocus) {
-                // Turn off Exp if open
                 isManualExp = false; btnExp.classList.remove('active');
-                expSliderContainer.style.display = 'none'; expStatus.style.display = 'none';
+                expControlContainer.style.display = 'none'; expStatus.style.display = 'none';
                 
                 btnFocus.classList.add('active');
                 focusStatus.innerText = 'MF'; focusStatus.style.color = '#ffeb3b';
-                focusSliderContainer.style.display = 'flex';
-                focusBlurAmount = parseFloat(focusSlider.value);
+                focusControlContainer.style.display = 'flex';
             } else {
                 btnFocus.classList.remove('active');
                 focusStatus.innerText = 'AF'; focusStatus.style.color = '#fff';
-                focusSliderContainer.style.display = 'none';
+                focusControlContainer.style.display = 'none';
                 focusBlurAmount = 0;
             }
             playTapeMechanicalSound('click');
         });
 
-        // EXPOSURE TOGGLE LOGIC
         btnExp.addEventListener('click', () => {
             if(!rawStream) return;
             isManualExp = !isManualExp;
             if (isManualExp) {
-                // Turn off Focus if open
                 isManualFocus = false; btnFocus.classList.remove('active');
-                focusSliderContainer.style.display = 'none'; focusStatus.innerText = 'AF'; focusStatus.style.color = '#fff';
+                focusControlContainer.style.display = 'none'; focusStatus.innerText = 'AF'; focusStatus.style.color = '#fff';
                 focusBlurAmount = 0;
 
                 btnExp.classList.add('active');
                 expStatus.style.display = 'block';
-                expSliderContainer.style.display = 'flex';
+                expControlContainer.style.display = 'flex';
                 updateExposureOSD();
             } else {
                 btnExp.classList.remove('active');
                 expStatus.style.display = 'none';
-                expSliderContainer.style.display = 'none';
+                expControlContainer.style.display = 'none';
                 exposureValue = 1.0; 
-                noiseLayer.style.opacity = '0.15'; // Reset noise
+                noiseLayer.style.opacity = '0.15';
             }
             playTapeMechanicalSound('click');
         });
 
-        focusSlider.addEventListener('input', (e) => {
-            if (isManualFocus) focusBlurAmount = parseFloat(e.target.value);
-        });
-
-        expSlider.addEventListener('input', (e) => {
-            if (isManualExp) {
-                exposureValue = parseFloat(e.target.value);
-                updateExposureOSD();
-            }
-        });
-
         function updateExposureOSD() {
-            // Format EV string (e.g. EV +1.5, EV -0.5)
-            let evNum = (exposureValue - 1.0) * 2; // Map 0.5->2.0 to -1.0->+2.0 scale
+            let evNum = (exposureValue - 1.0) * 2;
             let evString = evNum > 0 ? `+${evNum.toFixed(1)}` : evNum.toFixed(1);
             if (evNum === 0) evString = "0.0";
             expStatus.innerText = `EV ${evString}`;
             expStatus.style.color = '#ffeb3b';
             
-            // DYNAMIC NOISE GENERATION based on high ISO/Exposure
             let baseNoise = 0.15;
             let addedNoise = exposureValue > 1.0 ? (exposureValue - 1.0) * 0.35 : 0;
             noiseLayer.style.opacity = (baseNoise + addedNoise).toString();
         }
+
+        // ----------------------------------------------------
+        // BUTTON HOLD/ROCKER LOGIC
+        // ----------------------------------------------------
+        function startButtonHold(type, direction) {
+            if (!rawStream) return;
+            toggleZoomMotor(true); // Re-using motor sound for all lens adjustments to feel mechanical
+            
+            if (type === 'zoom') {
+                if (zoomInterval) clearInterval(zoomInterval);
+                zoomInterval = setInterval(() => {
+                    if (direction === 'in') currentZoom = Math.min(currentZoom + 0.04, maxZoom);
+                    else currentZoom = Math.max(currentZoom - 0.04, 1.0);
+                    
+                    const percent = ((currentZoom - 1.0) / (maxZoom - 1.0)) * 100;
+                    if (window.innerHeight > window.innerWidth) {
+                        zoomBar.style.width = `${percent}%`; zoomBar.style.height = '100%';
+                    } else {
+                        zoomBar.style.height = `${percent}%`; zoomBar.style.width = '100%';
+                    }
+                    zoomTLabel.style.color = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
+                    zoomBar.style.background = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
+                }, 30);
+            } 
+            else if (type === 'focus' && isManualFocus) {
+                if (focusInterval) clearInterval(focusInterval);
+                focusInterval = setInterval(() => {
+                    if (direction === 'far') focusBlurAmount = Math.min(focusBlurAmount + 0.1, 6.0);
+                    else focusBlurAmount = Math.max(focusBlurAmount - 0.1, 0);
+                }, 30);
+            }
+            else if (type === 'exp' && isManualExp) {
+                if (expInterval) clearInterval(expInterval);
+                expInterval = setInterval(() => {
+                    if (direction === 'up') exposureValue = Math.min(exposureValue + 0.02, 2.0);
+                    else exposureValue = Math.max(exposureValue - 0.02, 0.5);
+                    updateExposureOSD();
+                }, 30);
+            }
+        }
+
+        function stopButtonHold(type) { 
+            toggleZoomMotor(false);
+            if (type === 'zoom' && zoomInterval) clearInterval(zoomInterval);
+            if (type === 'focus' && focusInterval) clearInterval(focusInterval);
+            if (type === 'exp' && expInterval) clearInterval(expInterval);
+        }
+
+        // Attach hold events to Zoom
+        ['mousedown', 'touchstart'].forEach(evt => {
+            btnZoomIn.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('zoom', 'in'); });
+            btnZoomOut.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('zoom', 'out'); });
+        });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            btnZoomIn.addEventListener(evt, () => stopButtonHold('zoom'));
+            btnZoomOut.addEventListener(evt, () => stopButtonHold('zoom'));
+        });
+
+        // Attach hold events to Focus
+        ['mousedown', 'touchstart'].forEach(evt => {
+            btnFocusNear.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('focus', 'near'); });
+            btnFocusFar.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('focus', 'far'); });
+        });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            btnFocusNear.addEventListener(evt, () => stopButtonHold('focus'));
+            btnFocusFar.addEventListener(evt, () => stopButtonHold('focus'));
+        });
+
+        // Attach hold events to Exposure
+        ['mousedown', 'touchstart'].forEach(evt => {
+            btnExpDown.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('exp', 'down'); });
+            btnExpUp.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('exp', 'up'); });
+        });
+        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+            btnExpDown.addEventListener(evt, () => stopButtonHold('exp'));
+            btnExpUp.addEventListener(evt, () => stopButtonHold('exp'));
+        });
+
+        // ----------------------------------------------------
 
         setInterval(() => {
             const chance = Math.random();
@@ -474,60 +559,6 @@
                 osdWarnings.style.display = 'block';
             }
         }, 4000);
-
-        function toggleZoomMotor(isOn) {
-            if (!audioCtx || audioCtx.state === 'suspended') return;
-            if (isOn && !zoomMotorOsc) {
-                zoomMotorOsc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                zoomMotorOsc.type = 'sawtooth';
-                zoomMotorOsc.frequency.value = 4500; 
-                gain.gain.value = 0.003; 
-                zoomMotorOsc.connect(gain);
-                gain.connect(audioCtx.destination);
-                zoomMotorOsc.start();
-            } else if (!isOn && zoomMotorOsc) {
-                zoomMotorOsc.stop();
-                zoomMotorOsc = null;
-            }
-        }
-
-        function startZooming(direction) {
-            if (!rawStream) return;
-            toggleZoomMotor(true);
-            if (zoomInterval) clearInterval(zoomInterval);
-            zoomInterval = setInterval(() => {
-                if (direction === 'in') currentZoom = Math.min(currentZoom + 0.04, maxZoom);
-                else if (direction === 'out') currentZoom = Math.max(currentZoom - 0.04, 1.0);
-                
-                const percent = ((currentZoom - 1.0) / (maxZoom - 1.0)) * 100;
-                if (window.innerHeight > window.innerWidth) {
-                    zoomBar.style.width = `${percent}%`;
-                    zoomBar.style.height = '100%';
-                } else {
-                    zoomBar.style.height = `${percent}%`;
-                    zoomBar.style.width = '100%';
-                }
-                
-                zoomTLabel.style.color = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
-                zoomBar.style.background = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
-
-            }, 30);
-        }
-
-        function stopZooming() { 
-            toggleZoomMotor(false);
-            if (zoomInterval) clearInterval(zoomInterval); 
-        }
-
-        ['mousedown', 'touchstart'].forEach(evt => {
-            btnZoomIn.addEventListener(evt, (e) => { e.preventDefault(); startZooming('in'); });
-            btnZoomOut.addEventListener(evt, (e) => { e.preventDefault(); startZooming('out'); });
-        });
-        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            btnZoomIn.addEventListener(evt, stopZooming);
-            btnZoomOut.addEventListener(evt, stopZooming);
-        });
 
         async function startCamera() {
             try {
@@ -715,7 +746,6 @@
                     ctx.drawImage(canvas, (Math.random() - 0.5) * 20, 0);
                 }
 
-                // COMPILED FILTER ENGINE: Applies Focus Blur and Exposure Brightness together safely
                 let filterString = '';
                 if (focusBlurAmount > 0) filterString += `blur(${focusBlurAmount}px) `;
                 if (isManualExp) filterString += `brightness(${exposureValue}) `;
@@ -734,7 +764,7 @@
                     ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 }
                 
-                ctx.filter = 'none'; // Reset filter for UI and color grades
+                ctx.filter = 'none';
 
                 offscreenCanvas.width = isPortrait ? 20 : 30;
                 offscreenCanvas.height = isPortrait ? 30 : 20;
@@ -796,6 +826,7 @@
                 playTapeMechanicalSound('start');
 
                 recordedChunks = [];
+                // FIXED: Safari anti-freeze chunking (250ms interval)
                 const canvasStream = canvas.captureStream(15);
                 
                 const audioTracks = processedAudioDestination.stream.getAudioTracks();
@@ -804,7 +835,9 @@
                 mediaRecorder = new MediaRecorder(canvasStream);
                 mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = exportVideo;
-                mediaRecorder.start();
+                
+                // FIXED: Requesting chunks every 250ms prevents Safari memory crash
+                mediaRecorder.start(250);
 
                 isRecording = true;
                 isPaused = false;
