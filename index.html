@@ -170,7 +170,7 @@
         const canvas = document.getElementById('video-canvas');
         const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
         
-        // OFFSCREEN CANVAS (Fixed bug: Prevents MediaRecorder crash during Digital Zoom)
+        // OFFSCREEN CANVAS
         const offscreenCanvas = document.createElement('canvas');
         const offCtx = offscreenCanvas.getContext('2d', { alpha: false });
         
@@ -435,7 +435,6 @@
 
             if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
                 
-                // FIXED: Main Canvas Resolution is permanently locked so the MediaRecorder never crashes
                 if (canvas.width !== 240) { 
                     canvas.width = 240; 
                     canvas.height = 180; 
@@ -457,10 +456,10 @@
                     ctx.drawImage(canvas, (Math.random() - 0.5) * 20, 0);
                 }
 
+                // Sharp base frame (No ghosting trails)
                 ctx.globalCompositeOperation = 'source-over';
-                ctx.globalAlpha = isNightShot ? 0.3 : 0.65; 
+                ctx.globalAlpha = isNightShot ? 0.3 : 0.90; 
 
-                // FIXED: Digital Zoom crunch happens off-screen, maintaining a stable stream
                 if (currentZoom > digitalZoomThreshold) {
                     offscreenCanvas.width = 120;
                     offscreenCanvas.height = 90;
@@ -471,17 +470,32 @@
                     ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 }
 
-                ctx.globalCompositeOperation = 'screen';
-                ctx.globalAlpha = 0.25;
-                ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, -2, 0, canvas.width + 4, canvas.height);
+                // ---------------------------------------------------------
+                // THE NEW DREAMY LIGHT BLEED (Optical Bloom via Downscale)
+                // ---------------------------------------------------------
+                offscreenCanvas.width = 30;
+                offscreenCanvas.height = 20;
+                offCtx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, 30, 20);
                 
-                ctx.globalAlpha = 0.15;
-                ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, -canvas.height * 2, canvas.width, canvas.height * 5);
+                ctx.globalCompositeOperation = 'screen';
+                ctx.globalAlpha = 0.45; 
+                
+                // Turn smoothing ON just for this step to create a soft, natural blur
+                ctx.imageSmoothingEnabled = true; 
+                ctx.webkitImageSmoothingEnabled = true;
+                
+                // Draw the tiny canvas stretched out to create a soft glow that ONLY affects bright lights
+                ctx.drawImage(offscreenCanvas, 0, 0, 30, 20, 0, -5, canvas.width, canvas.height + 10);
+                
+                // Turn smoothing back OFF for the rest of the crunch
+                ctx.imageSmoothingEnabled = false; 
+                ctx.webkitImageSmoothingEnabled = false;
 
                 if (facingMode === 'user') {
                     ctx.restore();
                 }
 
+                // COLOR GRADING (The Dreamy JVC Everio Warmth is 100% retained)
                 if (isNightShot) {
                     ctx.globalCompositeOperation = 'multiply';
                     ctx.fillStyle = 'rgba(80, 255, 80, 0.4)';
@@ -489,12 +503,12 @@
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 } else {
                     ctx.globalCompositeOperation = 'screen';
-                    ctx.fillStyle = 'rgba(35, 25, 30, 0.3)';
+                    ctx.fillStyle = 'rgba(35, 25, 30, 0.3)'; // Faded blacks
                     ctx.globalAlpha = 1.0;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                     ctx.globalCompositeOperation = 'multiply';
-                    ctx.fillStyle = 'rgba(255, 240, 225, 0.8)';
+                    ctx.fillStyle = 'rgba(255, 240, 225, 0.8)'; // Warm yellow/magenta tint
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
 
