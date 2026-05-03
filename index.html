@@ -54,15 +54,18 @@
         
         .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04)); background-size: 100% 4px, 3px 100%; z-index: 2; }
         .vignette { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%); z-index: 3; }
-        .noise-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); opacity: 0.15; mix-blend-mode: overlay; z-index: 4; }
+        
+        .noise-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); opacity: 0.15; mix-blend-mode: overlay; z-index: 4; transition: opacity 0.2s; }
+        
         .nightshot-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background-color: rgba(50, 255, 50, 0.1); display: none; z-index: 4; mix-blend-mode: overlay; }
         
         .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 15px; box-sizing: border-box; text-shadow: 2px 2px 0px #000; font-size: 22px; letter-spacing: 1px; display: none; z-index: 10; }
-        .top-left { position: absolute; top: 15px; left: 15px; display: flex; align-items: center;}
+        .top-left { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
         .top-right { position: absolute; top: 15px; right: 15px; text-align: right; }
         .bottom-left { position: absolute; bottom: 15px; left: 15px; color: #ffeb3b; }
         .bottom-right { position: absolute; bottom: 15px; right: 15px; color: #ffeb3b; }
         
+        .status-row { display: flex; align-items: center; }
         .rec-dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; margin-right: 8px; display: none; }
         .is-recording .rec-dot { display: block; animation: blink 1s step-end infinite; }
         .is-recording #status-text { color: #ff0000; }
@@ -81,6 +84,12 @@
             display: none; z-index: 9999; animation: blink 0.5s step-end infinite;
             text-align: center; pointer-events: none;
         }
+
+        #focus-status, #exp-status { font-size: 18px; color: #fff; }
+        .slider-container { display: none; flex-direction: column; align-items: center; width: 60%; margin-bottom: 20px; }
+        .slider-container span { font-size: 10px; color: #888; font-family: Arial, sans-serif; margin-bottom: 5px;}
+        .osd-slider { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: #555; border-radius: 3px; outline: none; margin: 10px 0; }
+        .osd-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #ccc; cursor: pointer; }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes batteryFlicker { 0%, 98%, 100% { opacity: 1; } 99% { opacity: 0.3; } }
@@ -118,15 +127,12 @@
 
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20; font-size: 24px; animation: pulse 2s infinite; cursor: pointer; pointer-events: auto; }
         
-        /* --- DYNAMIC RESPONSIVE LAYOUTS --- */
-        
-        /* LANDSCAPE MODE (Standard wide camcorder view) */
         @media (orientation: landscape) {
             .hardware-body { flex-direction: row; }
             .left-panel { width: 15%; height: 100%; flex-direction: column; border-right: 4px solid #333; padding: 10px 5px; gap: 15px; }
             .center-screen-area { width: 60%; }
             .screen-bezel { height: 85vh; aspect-ratio: 4 / 3; }
-            .right-grip { width: 20%; height: 100%; flex-direction: column; border-left: 6px solid #111; border-radius: 40px 0 0 40px; gap: 40px; }
+            .right-grip { width: 20%; height: 100%; flex-direction: column; border-left: 6px solid #111; border-radius: 40px 0 0 40px; gap: 30px; }
             
             .sleek-btn { padding: 12px 5px; width: 90%; }
             .zoom-rocker { flex-direction: column; width: 60%; }
@@ -141,23 +147,24 @@
             .zoom-digital-line { bottom: 40%; left: 0; width: 100%; height: 2px; }
         }
 
-        /* PORTRAIT MODE (Stacked layout, keeps video perfectly proportioned) */
         @media (orientation: portrait) {
             .hardware-body { flex-direction: column; justify-content: space-between; }
-            .left-panel { width: 100%; height: auto; flex-direction: row; border-bottom: 4px solid #333; padding: 15px 5px; gap: 10px; }
+            .left-panel { width: 100%; height: auto; flex-direction: row; border-bottom: 4px solid #333; padding: 10px 5px; gap: 5px; flex-wrap: wrap; justify-content: center; }
             .center-screen-area { width: 100%; flex-grow: 1; padding: 15px 0; }
-            .screen-bezel { height: auto; width: 95vw; max-height: 60vh; aspect-ratio: 3 / 4; padding: 15px; }
-            .right-grip { width: 100%; height: auto; flex-direction: row; border-top: 6px solid #111; padding: 20px 10px; justify-content: space-around; gap: 0;}
+            .screen-bezel { height: auto; width: 95vw; max-height: 55vh; aspect-ratio: 3 / 4; padding: 15px; }
+            .right-grip { width: 100%; height: auto; flex-direction: row; border-top: 6px solid #111; padding: 15px 10px; justify-content: space-around; gap: 0;}
             
-            .sleek-btn { padding: 15px 5px; flex: 1; margin: 0 5px; font-size: 13px; }
-            .zoom-rocker { flex-direction: row; width: 50%; }
-            .zoom-rocker .sleek-btn { border-radius: 8px 2px 2px 8px; margin: 0 1px; padding: 20px 0; }
+            .sleek-btn { padding: 10px 2px; flex: 1 1 15%; margin: 2px; font-size: 10px; } 
+            .zoom-rocker { flex-direction: row; width: 45%; }
+            .zoom-rocker .sleek-btn { border-radius: 8px 2px 2px 8px; margin: 0 1px; padding: 15px 0; }
             .zoom-rocker #btn-zoom-out { border-radius: 2px 8px 8px 2px; }
-            .record-wrapper { width: 65px; height: 65px; margin-left: 10%; }
-            .phys-record-btn { width: 50px; height: 50px; }
+            .record-wrapper { width: 60px; height: 60px; margin-left: 5%; }
+            .phys-record-btn { width: 46px; height: 46px; }
+            
+            .slider-container { width: 45%; margin-bottom: 0; margin-right: 5%; }
 
             .ui-overlay { font-size: 18px; }
-            .top-left, .top-right { top: 40px; } /* Push down below the zoom bar */
+            .top-left, .top-right { top: 40px; } 
             .zoom-indicator { flex-direction: row; top: 15px; left: 50%; transform: translateX(-50%); width: 160px; justify-content: center; }
             .zoom-track { width: 100px; height: 8px; margin: 0 10px; }
             .zoom-fill { top: 0; left: 0; height: 100%; }
@@ -171,9 +178,12 @@
     <div class="hardware-body">
         <div class="left-panel">
             <button class="sleek-btn" id="btn-flip">LENS</button>
-            <button class="sleek-btn" id="btn-nightshot">NIGHTSHOT</button>
+            <button class="sleek-btn" id="btn-nightshot">NIGHT</button>
             <button class="sleek-btn" id="btn-date">DATE</button> 
             <button class="sleek-btn" id="btn-pause">PAUSE</button> 
+            <button class="sleek-btn" id="btn-focus">FOCUS</button> 
+            <!-- NEW EXPOSURE BUTTON -->
+            <button class="sleek-btn" id="btn-exp">EXP</button> 
         </div>
 
         <div class="center-screen-area">
@@ -185,14 +195,21 @@
                     
                     <div class="scanlines"></div>
                     <div class="vignette"></div>
-                    <div class="noise-overlay"></div>
+                    <div class="noise-overlay" id="noise-layer"></div>
                     <div class="nightshot-overlay" id="ns-overlay"></div>
                     
                     <div id="osd-warnings">C:31:22</div>
                     <div id="save-indicator">DATA SAVED</div>
 
                     <div class="ui-overlay" id="ui">
-                        <div class="top-left"><div class="rec-dot" id="rec-dot"></div><span id="status-text">STBY</span></div>
+                        <div class="top-left">
+                            <div class="status-row">
+                                <div class="rec-dot" id="rec-dot"></div>
+                                <span id="status-text">STBY</span>
+                            </div>
+                            <span id="focus-status">AF</span>
+                            <span id="exp-status" style="display:none;">EV 0.0</span>
+                        </div>
                         <div class="top-right"><span class="battery">[■■■]</span></div>
                         
                         <div class="zoom-indicator">
@@ -217,6 +234,18 @@
                 <button class="sleek-btn" id="btn-zoom-in">T</button>
                 <button class="sleek-btn" id="btn-zoom-out">W</button>
             </div>
+            
+            <div class="slider-container" id="focus-slider-container">
+                <span>MANUAL FOCUS</span>
+                <input type="range" min="0" max="6" value="0" step="0.1" class="osd-slider" id="focus-slider">
+            </div>
+
+            <!-- NEW EXPOSURE SLIDER -->
+            <div class="slider-container" id="exp-slider-container">
+                <span>EXPOSURE (EV)</span>
+                <input type="range" min="0.5" max="2.0" value="1.0" step="0.1" class="osd-slider" id="exp-slider">
+            </div>
+
             <div class="record-wrapper">
                 <button class="phys-record-btn" id="btn-phys-record"></button>
             </div>
@@ -238,6 +267,7 @@
         const recDot = document.getElementById('rec-dot');
         const tapeSpeed = document.getElementById('tape-speed');
         const nsOverlay = document.getElementById('ns-overlay');
+        const noiseLayer = document.getElementById('noise-layer');
         const timestampDiv = document.getElementById('timestamp'); 
         const osdWarnings = document.getElementById('osd-warnings');
         const saveIndicator = document.getElementById('save-indicator');
@@ -252,11 +282,23 @@
         const btnPause = document.getElementById('btn-pause');
         const btnRecord = document.getElementById('btn-phys-record');
 
+        // Focus & Exposure Elements
+        const btnFocus = document.getElementById('btn-focus');
+        const focusStatus = document.getElementById('focus-status');
+        const focusSliderContainer = document.getElementById('focus-slider-container');
+        const focusSlider = document.getElementById('focus-slider');
+
+        const btnExp = document.getElementById('btn-exp');
+        const expStatus = document.getElementById('exp-status');
+        const expSliderContainer = document.getElementById('exp-slider-container');
+        const expSlider = document.getElementById('exp-slider');
+
         let rawStream;
         let mediaRecorder;
         let recordedChunks = [];
         let isRecording = false;
         let isPaused = false;
+        let stoppingFlag = false; 
         
         let audioCtx;
         let micSource;
@@ -269,7 +311,13 @@
         const maxZoom = 3.5;
         const digitalZoomThreshold = 2.0; 
         let zoomInterval;
+        
         let focusBlurAmount = 0;
+        let isManualFocus = false; 
+        
+        let exposureValue = 1.0;
+        let isManualExp = false;
+
         let isGlitching = false;
         let isBlueScreen = false;
         
@@ -296,7 +344,6 @@
 
         btnPause.addEventListener('click', () => {
             if (!isRecording || !mediaRecorder) return;
-            
             if (mediaRecorder.state === 'recording') {
                 mediaRecorder.pause();
                 isPaused = true;
@@ -342,6 +389,77 @@
             playTapeMechanicalSound('click');
         });
 
+        // FOCUS TOGGLE LOGIC
+        btnFocus.addEventListener('click', () => {
+            if(!rawStream) return;
+            isManualFocus = !isManualFocus;
+            if (isManualFocus) {
+                // Turn off Exp if open
+                isManualExp = false; btnExp.classList.remove('active');
+                expSliderContainer.style.display = 'none'; expStatus.style.display = 'none';
+                
+                btnFocus.classList.add('active');
+                focusStatus.innerText = 'MF'; focusStatus.style.color = '#ffeb3b';
+                focusSliderContainer.style.display = 'flex';
+                focusBlurAmount = parseFloat(focusSlider.value);
+            } else {
+                btnFocus.classList.remove('active');
+                focusStatus.innerText = 'AF'; focusStatus.style.color = '#fff';
+                focusSliderContainer.style.display = 'none';
+                focusBlurAmount = 0;
+            }
+            playTapeMechanicalSound('click');
+        });
+
+        // EXPOSURE TOGGLE LOGIC
+        btnExp.addEventListener('click', () => {
+            if(!rawStream) return;
+            isManualExp = !isManualExp;
+            if (isManualExp) {
+                // Turn off Focus if open
+                isManualFocus = false; btnFocus.classList.remove('active');
+                focusSliderContainer.style.display = 'none'; focusStatus.innerText = 'AF'; focusStatus.style.color = '#fff';
+                focusBlurAmount = 0;
+
+                btnExp.classList.add('active');
+                expStatus.style.display = 'block';
+                expSliderContainer.style.display = 'flex';
+                updateExposureOSD();
+            } else {
+                btnExp.classList.remove('active');
+                expStatus.style.display = 'none';
+                expSliderContainer.style.display = 'none';
+                exposureValue = 1.0; 
+                noiseLayer.style.opacity = '0.15'; // Reset noise
+            }
+            playTapeMechanicalSound('click');
+        });
+
+        focusSlider.addEventListener('input', (e) => {
+            if (isManualFocus) focusBlurAmount = parseFloat(e.target.value);
+        });
+
+        expSlider.addEventListener('input', (e) => {
+            if (isManualExp) {
+                exposureValue = parseFloat(e.target.value);
+                updateExposureOSD();
+            }
+        });
+
+        function updateExposureOSD() {
+            // Format EV string (e.g. EV +1.5, EV -0.5)
+            let evNum = (exposureValue - 1.0) * 2; // Map 0.5->2.0 to -1.0->+2.0 scale
+            let evString = evNum > 0 ? `+${evNum.toFixed(1)}` : evNum.toFixed(1);
+            if (evNum === 0) evString = "0.0";
+            expStatus.innerText = `EV ${evString}`;
+            expStatus.style.color = '#ffeb3b';
+            
+            // DYNAMIC NOISE GENERATION based on high ISO/Exposure
+            let baseNoise = 0.15;
+            let addedNoise = exposureValue > 1.0 ? (exposureValue - 1.0) * 0.35 : 0;
+            noiseLayer.style.opacity = (baseNoise + addedNoise).toString();
+        }
+
         setInterval(() => {
             const chance = Math.random();
             if (chance > 0.85) { 
@@ -382,7 +500,6 @@
                 if (direction === 'in') currentZoom = Math.min(currentZoom + 0.04, maxZoom);
                 else if (direction === 'out') currentZoom = Math.max(currentZoom - 0.04, 1.0);
                 
-                // Dynamically update correct CSS depending on horizontal/vertical layout
                 const percent = ((currentZoom - 1.0) / (maxZoom - 1.0)) * 100;
                 if (window.innerHeight > window.innerWidth) {
                     zoomBar.style.width = `${percent}%`;
@@ -440,10 +557,10 @@
 
         function startAutofocusHunting() {
             setInterval(() => {
-                if (Math.random() > 0.75) { 
+                if (!isManualFocus && Math.random() > 0.75) { 
                     focusBlurAmount = Math.random() * 2 + 1; 
                     playTapeMechanicalSound('focus'); 
-                    setTimeout(() => { focusBlurAmount = 0; }, 600 + Math.random() * 800);
+                    setTimeout(() => { if (!isManualFocus) focusBlurAmount = 0; }, 600 + Math.random() * 800);
                 }
             }, 3000);
         }
@@ -549,15 +666,14 @@
             const elapsed = timestamp - lastFrameTime;
 
             if (elapsed < frameInterval) return;
-            if (isGlitching && Math.random() > 0.6) return;
+            if (!stoppingFlag && isGlitching && Math.random() > 0.6) return;
 
             lastFrameTime = timestamp - (elapsed % frameInterval);
 
-            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA || stoppingFlag) {
                 
-                // DYNAMIC ORIENTATION DETECTION
                 let isPortrait = window.innerHeight > window.innerWidth;
-                if (isRecording) isPortrait = canvas.height > canvas.width; // Lock orientation during recording to prevent crashes
+                if (isRecording || stoppingFlag) isPortrait = canvas.height > canvas.width; 
 
                 const baseW = isPortrait ? 180 : 240;
                 const baseH = isPortrait ? 240 : 180;
@@ -569,7 +685,6 @@
                     ctx.webkitImageSmoothingEnabled = false;
                 }
                 
-                // THE PERFECT CENTER CROP ALGORITHM (No stretching or squishing!)
                 const canvasAspect = canvas.width / canvas.height;
                 const videoAspect = videoElement.videoWidth / videoElement.videoHeight;
                 
@@ -595,10 +710,16 @@
                     ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
                 }
 
-                if (isGlitching && Math.random() > 0.5) {
+                if (!stoppingFlag && isGlitching && Math.random() > 0.5) {
                     ctx.globalCompositeOperation = 'difference';
                     ctx.drawImage(canvas, (Math.random() - 0.5) * 20, 0);
                 }
+
+                // COMPILED FILTER ENGINE: Applies Focus Blur and Exposure Brightness together safely
+                let filterString = '';
+                if (focusBlurAmount > 0) filterString += `blur(${focusBlurAmount}px) `;
+                if (isManualExp) filterString += `brightness(${exposureValue}) `;
+                ctx.filter = filterString.trim() || 'none';
 
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = isNightShot ? 0.3 : 0.90; 
@@ -612,6 +733,8 @@
                 } else {
                     ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 }
+                
+                ctx.filter = 'none'; // Reset filter for UI and color grades
 
                 offscreenCanvas.width = isPortrait ? 20 : 30;
                 offscreenCanvas.height = isPortrait ? 30 : 20;
@@ -645,7 +768,7 @@
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
 
-                if (isBlueScreen) {
+                if (!stoppingFlag && isBlueScreen) {
                     ctx.globalCompositeOperation = 'source-over';
                     ctx.fillStyle = '#0000AA';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -685,6 +808,7 @@
 
                 isRecording = true;
                 isPaused = false;
+                stoppingFlag = false;
                 container.classList.add('is-recording');
                 statusText.innerText = 'REC'; statusText.style.color = '#ff0000';
                 tapeSpeed.innerText = 'REC'; 
@@ -697,20 +821,22 @@
             } else {
                 playTapeMechanicalSound('stop');
                 
+                stoppingFlag = true;
+                
                 setTimeout(() => {
                     mediaRecorder.stop();
-                }, 500);
-                
-                isRecording = false;
-                isPaused = false;
-                container.classList.remove('is-recording');
-                statusText.innerText = 'STBY'; statusText.style.color = '#eee';
-                tapeSpeed.innerText = 'SP';
-                recDot.style.animation = 'none'; recDot.style.opacity = '1';
-                btnRecord.classList.remove('active'); 
-                
-                btnPause.classList.remove('active-pause');
-                btnPause.innerText = 'PAUSE';
+                    isRecording = false;
+                    isPaused = false;
+                    stoppingFlag = false;
+                    container.classList.remove('is-recording');
+                    statusText.innerText = 'STBY'; statusText.style.color = '#eee';
+                    tapeSpeed.innerText = 'SP';
+                    recDot.style.animation = 'none'; recDot.style.opacity = '1';
+                    btnRecord.classList.remove('active'); 
+                    
+                    btnPause.classList.remove('active-pause');
+                    btnPause.innerText = 'PAUSE';
+                }, 500); 
             }
         }
 
