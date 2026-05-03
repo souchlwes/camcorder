@@ -15,6 +15,7 @@
             display: flex; justify-content: center; align-items: center; 
             height: 100vh; width: 100vw; overflow: hidden; 
             font-family: 'VT323', monospace; color: #fff; user-select: none; 
+            -webkit-user-select: none;
         }
 
         .hardware-body {
@@ -243,6 +244,7 @@
                 </div>
             </div>
             
+            <!-- BUTTON-BASED FOCUS CONTROL -->
             <div class="control-group" id="focus-control-container" style="display:none;">
                 <span class="control-label">MANUAL FOCUS</span>
                 <div class="horizontal-rocker">
@@ -251,6 +253,7 @@
                 </div>
             </div>
 
+            <!-- BUTTON-BASED EXPOSURE CONTROL -->
             <div class="control-group" id="exp-control-container" style="display:none;">
                 <span class="control-label">EXPOSURE (EV)</span>
                 <div class="horizontal-rocker">
@@ -290,7 +293,7 @@
         const btnZoomIn = document.getElementById('btn-zoom-in');
         const btnZoomOut = document.getElementById('btn-zoom-out');
         const btnFlip = document.getElementById('btn-flip');
-        const btnFlash = document.getElementById('btn-flash'); // NEW FLASH BUTTON
+        const btnFlash = document.getElementById('btn-flash'); 
         const btnNightshot = document.getElementById('btn-nightshot');
         const btnDate = document.getElementById('btn-date'); 
         const btnPause = document.getElementById('btn-pause');
@@ -336,7 +339,7 @@
         let isManualExp = false;
         let expInterval;
 
-        let isFlashOn = false; // FLASH STATE
+        let isFlashOn = false; 
 
         let isGlitching = false;
         let isBlueScreen = false;
@@ -354,7 +357,6 @@
         
         btnFlip.addEventListener('click', async () => { 
             if(rawStream) {
-                // RESET FLASH WHEN SWITCHING LENS
                 isFlashOn = false;
                 btnFlash.classList.remove('active');
                 btnFlash.style.color = '#eee';
@@ -367,9 +369,6 @@
 
         osdWarnings.addEventListener('click', () => { osdWarnings.style.display = 'none'; });
 
-        // ----------------------------------------------------
-        // FLASH TOGGLE LOGIC
-        // ----------------------------------------------------
         btnFlash.addEventListener('click', async () => {
             if(!rawStream) return;
             const track = rawStream.getVideoTracks()[0];
@@ -388,7 +387,6 @@
                     btnFlash.style.color = '#eee';
                 }
             } catch (err) {
-                // HARDWARE CHECK: If no torch is available (e.g., front camera)
                 isFlashOn = false;
                 btnFlash.classList.remove('active');
                 btnFlash.style.color = '#eee';
@@ -447,6 +445,9 @@
             playTapeMechanicalSound('click');
         });
 
+        // ----------------------------------------------------
+        // FIXED: Focus & Exposure Display Logic
+        // ----------------------------------------------------
         btnFocus.addEventListener('click', () => {
             if(!rawStream) return;
             isManualFocus = !isManualFocus;
@@ -457,6 +458,7 @@
                 btnFocus.classList.add('active');
                 focusStatus.innerText = 'MF'; focusStatus.style.color = '#ffeb3b';
                 focusControlContainer.style.display = 'flex';
+                focusBlurAmount = 0; // Reset safe start
             } else {
                 btnFocus.classList.remove('active');
                 focusStatus.innerText = 'AF'; focusStatus.style.color = '#fff';
@@ -500,41 +502,46 @@
             noiseLayer.style.opacity = (baseNoise + addedNoise).toString();
         }
 
+        // ----------------------------------------------------
+        // FIXED: Instant Step + Hold Math
+        // ----------------------------------------------------
+        function stepValue(type, direction) {
+            if (type === 'zoom') {
+                if (direction === 'in') currentZoom = Math.min(currentZoom + 0.05, maxZoom);
+                else currentZoom = Math.max(currentZoom - 0.05, 1.0);
+                
+                const percent = ((currentZoom - 1.0) / (maxZoom - 1.0)) * 100;
+                if (window.innerHeight > window.innerWidth) {
+                    zoomBar.style.width = `${percent}%`; zoomBar.style.height = '100%';
+                } else {
+                    zoomBar.style.height = `${percent}%`; zoomBar.style.width = '100%';
+                }
+                zoomTLabel.style.color = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
+                zoomBar.style.background = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
+            }
+            else if (type === 'focus' && isManualFocus) {
+                if (direction === 'far') focusBlurAmount = Math.min(focusBlurAmount + 0.2, 6.0);
+                else focusBlurAmount = Math.max(focusBlurAmount - 0.2, 0);
+            }
+            else if (type === 'exp' && isManualExp) {
+                if (direction === 'up') exposureValue = Math.min(exposureValue + 0.05, 2.0);
+                else exposureValue = Math.max(exposureValue - 0.05, 0.5);
+                updateExposureOSD();
+            }
+        }
+
         function startButtonHold(type, direction) {
             if (!rawStream) return;
             toggleZoomMotor(true); 
             
-            if (type === 'zoom') {
-                if (zoomInterval) clearInterval(zoomInterval);
-                zoomInterval = setInterval(() => {
-                    if (direction === 'in') currentZoom = Math.min(currentZoom + 0.04, maxZoom);
-                    else currentZoom = Math.max(currentZoom - 0.04, 1.0);
-                    
-                    const percent = ((currentZoom - 1.0) / (maxZoom - 1.0)) * 100;
-                    if (window.innerHeight > window.innerWidth) {
-                        zoomBar.style.width = `${percent}%`; zoomBar.style.height = '100%';
-                    } else {
-                        zoomBar.style.height = `${percent}%`; zoomBar.style.width = '100%';
-                    }
-                    zoomTLabel.style.color = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
-                    zoomBar.style.background = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
-                }, 30);
-            } 
-            else if (type === 'focus' && isManualFocus) {
-                if (focusInterval) clearInterval(focusInterval);
-                focusInterval = setInterval(() => {
-                    if (direction === 'far') focusBlurAmount = Math.min(focusBlurAmount + 0.1, 6.0);
-                    else focusBlurAmount = Math.max(focusBlurAmount - 0.1, 0);
-                }, 30);
-            }
-            else if (type === 'exp' && isManualExp) {
-                if (expInterval) clearInterval(expInterval);
-                expInterval = setInterval(() => {
-                    if (direction === 'up') exposureValue = Math.min(exposureValue + 0.02, 2.0);
-                    else exposureValue = Math.max(exposureValue - 0.02, 0.5);
-                    updateExposureOSD();
-                }, 30);
-            }
+            // Instantly execute one step so quick taps feel responsive
+            stepValue(type, direction);
+            
+            stopButtonHold(type); // clear existing intervals
+            
+            if (type === 'zoom') zoomInterval = setInterval(() => stepValue(type, direction), 30);
+            else if (type === 'focus') focusInterval = setInterval(() => stepValue(type, direction), 30);
+            else if (type === 'exp') expInterval = setInterval(() => stepValue(type, direction), 30);
         }
 
         function stopButtonHold(type) { 
@@ -544,29 +551,21 @@
             if (type === 'exp' && expInterval) clearInterval(expInterval);
         }
 
+        // Attach listeners with touchcancel added for iOS safety
         ['mousedown', 'touchstart'].forEach(evt => {
             btnZoomIn.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('zoom', 'in'); });
             btnZoomOut.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('zoom', 'out'); });
-        });
-        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            btnZoomIn.addEventListener(evt, () => stopButtonHold('zoom'));
-            btnZoomOut.addEventListener(evt, () => stopButtonHold('zoom'));
-        });
-
-        ['mousedown', 'touchstart'].forEach(evt => {
             btnFocusNear.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('focus', 'near'); });
             btnFocusFar.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('focus', 'far'); });
-        });
-        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
-            btnFocusNear.addEventListener(evt, () => stopButtonHold('focus'));
-            btnFocusFar.addEventListener(evt, () => stopButtonHold('focus'));
-        });
-
-        ['mousedown', 'touchstart'].forEach(evt => {
             btnExpDown.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('exp', 'down'); });
             btnExpUp.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('exp', 'up'); });
         });
-        ['mouseup', 'mouseleave', 'touchend'].forEach(evt => {
+
+        ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(evt => {
+            btnZoomIn.addEventListener(evt, () => stopButtonHold('zoom'));
+            btnZoomOut.addEventListener(evt, () => stopButtonHold('zoom'));
+            btnFocusNear.addEventListener(evt, () => stopButtonHold('focus'));
+            btnFocusFar.addEventListener(evt, () => stopButtonHold('focus'));
             btnExpDown.addEventListener(evt, () => stopButtonHold('exp'));
             btnExpUp.addEventListener(evt, () => stopButtonHold('exp'));
         });
