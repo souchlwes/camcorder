@@ -70,7 +70,6 @@
         .is-recording #status-text { color: #ff0000; }
         .battery { animation: batteryFlicker 10s infinite; display: block; margin-bottom: 15px; }
 
-        /* UPGRADED: OSD Elements */
         .zoom-indicator { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; font-size: 18px; }
         .zoom-track { width: 8px; height: 100px; border: 2px solid #fff; position: relative; margin: 5px 0; background: rgba(0,0,0,0.5); }
         .zoom-fill { position: absolute; bottom: 0; width: 100%; background: #fff; transition: height 0.1s; }
@@ -128,14 +127,12 @@
                     <div class="noise-overlay"></div>
                     <div class="nightshot-overlay" id="ns-overlay"></div>
                     
-                    <!-- Hardware Glitch UI -->
                     <div id="osd-warnings">C:31:22</div>
 
                     <div class="ui-overlay" id="ui">
                         <div class="top-left"><div class="rec-dot"></div><span id="status-text">STBY</span></div>
                         <div class="top-right"><span class="battery">[■■■]</span></div>
                         
-                        <!-- Zoom UI -->
                         <div class="zoom-indicator">
                             <span>W</span>
                             <div class="zoom-track">
@@ -168,8 +165,14 @@
         const container = document.getElementById('container');
         const startScreen = document.getElementById('start-screen');
         const videoElement = document.getElementById('camera-feed');
+        
+        // MAIN CANVAS
         const canvas = document.getElementById('video-canvas');
         const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+        
+        // OFFSCREEN CANVAS (Fixed bug: Prevents MediaRecorder crash during Digital Zoom)
+        const offscreenCanvas = document.createElement('canvas');
+        const offCtx = offscreenCanvas.getContext('2d', { alpha: false });
         
         const ui = document.getElementById('ui');
         const statusText = document.getElementById('status-text');
@@ -217,7 +220,7 @@
         
         btnRecord.addEventListener('click', () => { if(rawStream) toggleRecording(); });
         btnFlip.addEventListener('click', () => { if(rawStream) switchCamera(); });
-        osdWarnings.addEventListener('click', () => { osdWarnings.style.display = 'none'; }); // Smack camera to fix
+        osdWarnings.addEventListener('click', () => { osdWarnings.style.display = 'none'; });
 
         btnNightshot.addEventListener('click', () => {
             if(!rawStream) return;
@@ -235,7 +238,6 @@
             playTapeMechanicalSound('click');
         });
 
-        // --- HARDWARE GLITCH ENGINE ---
         setInterval(() => {
             if (Math.random() > 0.8) { 
                 isGlitching = true;
@@ -247,7 +249,6 @@
             }
         }, 4000);
 
-        // --- ZOOM & MECHANICAL AUDIO CONTROLS ---
         function toggleZoomMotor(isOn) {
             if (!audioCtx || audioCtx.state === 'suspended') return;
             if (isOn && !zoomMotorOsc) {
@@ -273,7 +274,6 @@
                 if (direction === 'in') currentZoom = Math.min(currentZoom + 0.04, maxZoom);
                 else if (direction === 'out') currentZoom = Math.max(currentZoom - 0.04, 1.0);
                 
-                // Update UI Bar
                 const percent = ((currentZoom - 1.0) / (maxZoom - 1.0)) * 100;
                 zoomBar.style.height = `${percent}%`;
                 zoomTLabel.style.color = currentZoom > digitalZoomThreshold ? 'red' : '#fff';
@@ -328,7 +328,7 @@
             setInterval(() => {
                 if (Math.random() > 0.75) { 
                     focusBlurAmount = Math.random() * 2 + 1; 
-                    playTapeMechanicalSound('focus'); // Lens ticking sound
+                    playTapeMechanicalSound('focus'); 
                     setTimeout(() => { focusBlurAmount = 0; }, 600 + Math.random() * 800);
                 }
             }, 3000);
@@ -429,28 +429,16 @@
             const elapsed = timestamp - lastFrameTime;
 
             if (elapsed < frameInterval) return;
-            
-            // Tape Stutter Glitch (Skips frame drawing)
             if (isGlitching && Math.random() > 0.6) return;
 
             lastFrameTime = timestamp - (elapsed % frameInterval);
 
             if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
                 
-                // DIGITAL ZOOM DEGRADATION: Drastically drops resolution when zoomed past threshold
-                let crunchWidth = 240; 
-                let crunchHeight = 180;
-                if (currentZoom > digitalZoomThreshold) {
-                    crunchWidth = 120;
-                    crunchHeight = 90;
-                }
-                
-                if (canvas.width !== crunchWidth) { 
-                    canvas.width = crunchWidth; 
-                    canvas.height = crunchHeight; 
-                    ctx.fillStyle = "#000"; 
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
+                // FIXED: Main Canvas Resolution is permanently locked so the MediaRecorder never crashes
+                if (canvas.width !== 240) { 
+                    canvas.width = 240; 
+                    canvas.height = 180; 
                     ctx.imageSmoothingEnabled = false; 
                     ctx.webkitImageSmoothingEnabled = false;
                 }
@@ -464,7 +452,6 @@
                     ctx.save(); ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
                 }
 
-                // DATA MOSHING GLITCH (Draws chunks offset slightly)
                 if (isGlitching && Math.random() > 0.5) {
                     ctx.globalCompositeOperation = 'difference';
                     ctx.drawImage(canvas, (Math.random() - 0.5) * 20, 0);
@@ -472,14 +459,22 @@
 
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = isNightShot ? 0.3 : 0.65; 
-                ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
 
-                // HALATION & CCD SENSOR SMEAR
+                // FIXED: Digital Zoom crunch happens off-screen, maintaining a stable stream
+                if (currentZoom > digitalZoomThreshold) {
+                    offscreenCanvas.width = 120;
+                    offscreenCanvas.height = 90;
+                    offCtx.imageSmoothingEnabled = false;
+                    offCtx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, 120, 90);
+                    ctx.drawImage(offscreenCanvas, 0, 0, 120, 90, 0, 0, canvas.width, canvas.height);
+                } else {
+                    ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+                }
+
                 ctx.globalCompositeOperation = 'screen';
                 ctx.globalAlpha = 0.25;
                 ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, -2, 0, canvas.width + 4, canvas.height);
                 
-                // The vertical light bleed (simulates cheap CCD overload)
                 ctx.globalAlpha = 0.15;
                 ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, -canvas.height * 2, canvas.width, canvas.height * 5);
 
@@ -487,7 +482,6 @@
                     ctx.restore();
                 }
 
-                // COLOR GRADING
                 if (isNightShot) {
                     ctx.globalCompositeOperation = 'multiply';
                     ctx.fillStyle = 'rgba(80, 255, 80, 0.4)';
