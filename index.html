@@ -28,7 +28,7 @@
             width: 15%; height: 100%; background: linear-gradient(90deg, #555, #888);
             border-right: 4px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center;
             padding: 20px 10px; box-sizing: border-box; box-shadow: inset -5px 0 10px rgba(0,0,0,0.5);
-            gap: 25px; z-index: 10;
+            gap: 20px; z-index: 10;
         }
 
         .center-screen-area { width: 60%; display: flex; justify-content: center; align-items: center; margin: 0 2%; }
@@ -76,30 +76,53 @@
         .zoom-digital-line { position: absolute; bottom: 40%; width: 100%; height: 2px; background: red; z-index: 2; }
         
         #osd-warnings { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: red; font-size: 32px; display: none; z-index: 15; text-shadow: 2px 2px #000; animation: blink 1s infinite; cursor: pointer; pointer-events: auto; }
+        
+        /* THE NEW "DATA SAVED" OSD INDICATOR */
+        #save-indicator {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            color: #00ff00; font-size: 24px; text-shadow: 2px 2px 0px #000;
+            display: none; z-index: 15; animation: blink 0.5s step-end infinite;
+        }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes batteryFlicker { 0%, 98%, 100% { opacity: 1; } 99% { opacity: 0.3; } }
         
         .sleek-btn {
-            background: linear-gradient(180deg, #e0e0e0, #a0a0a0);
-            border: 1px solid #444; border-radius: 4px; padding: 12px 5px; margin: 0; width: 90%;
-            color: #222; font-family: Arial, sans-serif; font-weight: bold; font-size: 11px;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.4), inset 0 1px 1px #fff;
+            background: linear-gradient(to bottom, #5a5a5a, #333);
+            border: 1px solid #111; border-top: 1px solid #777; border-radius: 6px; 
+            padding: 12px 5px; margin: 0; width: 90%;
+            color: #eee; font-family: Arial, sans-serif; font-weight: bold; font-size: 11px;
+            box-shadow: 0 4px 5px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
             cursor: pointer; touch-action: none; text-transform: uppercase; text-align: center;
+            transition: all 0.1s;
         }
-        .sleek-btn:active { box-shadow: 0 1px 1px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.4); transform: translateY(2px); }
+        .sleek-btn:active, .sleek-btn.active { 
+            background: linear-gradient(to bottom, #333, #222); color: #888;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.8); 
+            transform: translateY(3px); border-top: 1px solid #111;
+        }
+        .sleek-btn.active-pause { background: linear-gradient(to bottom, #cca300, #997a00); color: #fff; border-top: 1px solid #ffcc00; }
 
-        .zoom-rocker { display: flex; flex-direction: column; background: #111; padding: 6px; border-radius: 8px; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); width: 60%; }
-        .zoom-rocker .sleek-btn { border-radius: 4px; margin: 3px 0; padding: 15px 0; font-size: 14px; width: 100%; }
+        .zoom-rocker { 
+            display: flex; flex-direction: column; background: #1a1a1a; padding: 4px; border-radius: 12px; 
+            box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); width: 60%; border: 1px solid #000;
+        }
+        .zoom-rocker .sleek-btn { border-radius: 8px 8px 2px 2px; margin: 1px 0; padding: 15px 0; font-size: 14px; width: 100%; }
+        .zoom-rocker #btn-zoom-out { border-radius: 2px 2px 8px 8px; }
 
-        .record-wrapper { background: #111; padding: 6px; border-radius: 50%; box-shadow: inset 0 2px 5px #000, 0 1px 1px rgba(255,255,255,0.1); }
+        .record-wrapper { 
+            background: linear-gradient(135deg, #e6e6e6, #888); padding: 6px; border-radius: 50%; 
+            box-shadow: inset 0 2px 5px #fff, 0 4px 6px rgba(0,0,0,0.7); border: 1px solid #555;
+        }
         .phys-record-btn {
-            width: 45px; height: 45px; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #ff4d4d, #b30000, #4d0000);
-            border: 1px solid #330000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.4); cursor: pointer;
+            width: 42px; height: 42px; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000); border: 2px solid #600;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 3px 5px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.1s;
         }
-        .phys-record-btn:active, .phys-record-btn.active { box-shadow: 0 1px 2px rgba(0,0,0,0.8), inset 0 3px 6px rgba(0,0,0,0.9); transform: translateY(3px); }
+        .phys-record-btn:active, .phys-record-btn.active { 
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,0.5); 
+            transform: translateY(2px); background: radial-gradient(circle at 30% 30%, #cc0000, #800000);
+        }
 
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 20; font-size: 24px; animation: pulse 2s infinite; cursor: pointer; pointer-events: auto; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -111,8 +134,9 @@
     <div class="hardware-body">
         <div class="left-panel">
             <button class="sleek-btn" id="btn-flip">LENS</button>
-            <button class="sleek-btn" id="btn-nightshot" style="color: #222;">NIGHTSHOT</button>
+            <button class="sleek-btn" id="btn-nightshot">NIGHTSHOT</button>
             <button class="sleek-btn" id="btn-date">DATE</button> 
+            <button class="sleek-btn" id="btn-pause">PAUSE</button> 
         </div>
 
         <div class="center-screen-area">
@@ -128,9 +152,12 @@
                     <div class="nightshot-overlay" id="ns-overlay"></div>
                     
                     <div id="osd-warnings">C:31:22</div>
+                    
+                    <!-- NEW INDICATOR -->
+                    <div id="save-indicator">DATA SAVED</div>
 
                     <div class="ui-overlay" id="ui">
-                        <div class="top-left"><div class="rec-dot"></div><span id="status-text">STBY</span></div>
+                        <div class="top-left"><div class="rec-dot" id="rec-dot"></div><span id="status-text">STBY</span></div>
                         <div class="top-right"><span class="battery">[■■■]</span></div>
                         
                         <div class="zoom-indicator">
@@ -166,20 +193,19 @@
         const startScreen = document.getElementById('start-screen');
         const videoElement = document.getElementById('camera-feed');
         
-        // MAIN CANVAS
         const canvas = document.getElementById('video-canvas');
         const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
-        
-        // OFFSCREEN CANVAS
         const offscreenCanvas = document.createElement('canvas');
         const offCtx = offscreenCanvas.getContext('2d', { alpha: false });
         
         const ui = document.getElementById('ui');
         const statusText = document.getElementById('status-text');
+        const recDot = document.getElementById('rec-dot');
         const tapeSpeed = document.getElementById('tape-speed');
         const nsOverlay = document.getElementById('ns-overlay');
         const timestampDiv = document.getElementById('timestamp'); 
         const osdWarnings = document.getElementById('osd-warnings');
+        const saveIndicator = document.getElementById('save-indicator');
         const zoomBar = document.getElementById('zoom-bar');
         const zoomTLabel = document.getElementById('zoom-t-label');
         
@@ -188,12 +214,14 @@
         const btnFlip = document.getElementById('btn-flip');
         const btnNightshot = document.getElementById('btn-nightshot');
         const btnDate = document.getElementById('btn-date'); 
+        const btnPause = document.getElementById('btn-pause');
         const btnRecord = document.getElementById('btn-phys-record');
 
         let rawStream;
         let mediaRecorder;
         let recordedChunks = [];
         let isRecording = false;
+        let isPaused = false;
         
         let audioCtx;
         let micSource;
@@ -208,6 +236,7 @@
         let zoomInterval;
         let focusBlurAmount = 0;
         let isGlitching = false;
+        let isBlueScreen = false;
         
         let facingMode = "environment"; 
         let isNightShot = false;
@@ -222,11 +251,42 @@
         btnFlip.addEventListener('click', () => { if(rawStream) switchCamera(); });
         osdWarnings.addEventListener('click', () => { osdWarnings.style.display = 'none'; });
 
+        btnPause.addEventListener('click', () => {
+            if (!isRecording || !mediaRecorder) return;
+            
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.pause();
+                isPaused = true;
+                statusText.innerText = 'PAUSE';
+                statusText.style.color = '#ffeb3b';
+                recDot.style.animation = 'none';
+                recDot.style.opacity = '0.5';
+                btnPause.classList.add('active-pause');
+                btnPause.innerText = 'RESUME';
+                playTapeMechanicalSound('click');
+            } else if (mediaRecorder.state === 'paused') {
+                mediaRecorder.resume();
+                isPaused = false;
+                statusText.innerText = 'REC';
+                statusText.style.color = '#ff0000';
+                recDot.style.animation = 'blink 1s step-end infinite';
+                recDot.style.opacity = '1';
+                btnPause.classList.remove('active-pause');
+                btnPause.innerText = 'PAUSE';
+                playTapeMechanicalSound('click');
+            }
+        });
+
         btnNightshot.addEventListener('click', () => {
             if(!rawStream) return;
             isNightShot = !isNightShot;
-            btnNightshot.style.color = isNightShot ? '#00ff00' : '#222'; 
-            btnNightshot.style.background = isNightShot ? 'linear-gradient(180deg, #555, #333)' : 'linear-gradient(180deg, #e0e0e0, #a0a0a0)';
+            if (isNightShot) {
+                btnNightshot.style.color = '#00ff00';
+                btnNightshot.classList.add('active');
+            } else {
+                btnNightshot.style.color = '#eee';
+                btnNightshot.classList.remove('active');
+            }
             nsOverlay.style.display = isNightShot ? 'block' : 'none';
             playTapeMechanicalSound('click'); 
         });
@@ -235,13 +295,18 @@
             if(!rawStream) return;
             showDate = !showDate;
             timestampDiv.style.display = showDate ? 'block' : 'none';
+            btnDate.classList.toggle('active');
             playTapeMechanicalSound('click');
         });
 
         setInterval(() => {
-            if (Math.random() > 0.8) { 
+            const chance = Math.random();
+            if (chance > 0.85) { 
                 isGlitching = true;
                 setTimeout(() => { isGlitching = false; }, Math.random() * 600 + 100); 
+            } else if (chance < 0.08) { 
+                isBlueScreen = true;
+                setTimeout(() => { isBlueScreen = false; }, Math.random() * 400 + 150);
             }
             if (Math.random() > 0.96 && osdWarnings.style.display === 'none') {
                 osdWarnings.innerText = Math.random() > 0.5 ? 'TAPE END' : 'C:31:22';
@@ -368,6 +433,12 @@
                 gain.gain.setValueAtTime(0.01, audioCtx.currentTime); 
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            } else if (type === 'beep') { // NEW BEEP FOR SAVING
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
             }
         }
 
@@ -456,7 +527,6 @@
                     ctx.drawImage(canvas, (Math.random() - 0.5) * 20, 0);
                 }
 
-                // Sharp base frame (No ghosting trails)
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.globalAlpha = isNightShot ? 0.3 : 0.90; 
 
@@ -470,24 +540,15 @@
                     ctx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
                 }
 
-                // ---------------------------------------------------------
-                // THE NEW DREAMY LIGHT BLEED (Optical Bloom via Downscale)
-                // ---------------------------------------------------------
                 offscreenCanvas.width = 30;
                 offscreenCanvas.height = 20;
                 offCtx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, 30, 20);
                 
                 ctx.globalCompositeOperation = 'screen';
                 ctx.globalAlpha = 0.45; 
-                
-                // Turn smoothing ON just for this step to create a soft, natural blur
                 ctx.imageSmoothingEnabled = true; 
                 ctx.webkitImageSmoothingEnabled = true;
-                
-                // Draw the tiny canvas stretched out to create a soft glow that ONLY affects bright lights
                 ctx.drawImage(offscreenCanvas, 0, 0, 30, 20, 0, -5, canvas.width, canvas.height + 10);
-                
-                // Turn smoothing back OFF for the rest of the crunch
                 ctx.imageSmoothingEnabled = false; 
                 ctx.webkitImageSmoothingEnabled = false;
 
@@ -495,7 +556,6 @@
                     ctx.restore();
                 }
 
-                // COLOR GRADING (The Dreamy JVC Everio Warmth is 100% retained)
                 if (isNightShot) {
                     ctx.globalCompositeOperation = 'multiply';
                     ctx.fillStyle = 'rgba(80, 255, 80, 0.4)';
@@ -503,18 +563,35 @@
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 } else {
                     ctx.globalCompositeOperation = 'screen';
-                    ctx.fillStyle = 'rgba(35, 25, 30, 0.3)'; // Faded blacks
+                    ctx.fillStyle = 'rgba(35, 25, 30, 0.3)';
                     ctx.globalAlpha = 1.0;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                     ctx.globalCompositeOperation = 'multiply';
-                    ctx.fillStyle = 'rgba(255, 240, 225, 0.8)'; // Warm yellow/magenta tint
+                    ctx.fillStyle = 'rgba(255, 240, 225, 0.8)';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                if (isBlueScreen) {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.fillStyle = '#0000AA';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                    for (let i = 0; i < 8; i++) {
+                        ctx.fillRect(0, Math.random() * canvas.height, canvas.width, Math.random() * 4);
+                    }
                 }
 
                 ctx.globalAlpha = 1.0;
                 ctx.globalCompositeOperation = 'source-over';
             }
+        }
+
+        function triggerSaveSuccess() {
+            saveIndicator.style.display = 'block';
+            playTapeMechanicalSound('beep');
+            setTimeout(() => { saveIndicator.style.display = 'none'; }, 3000);
         }
 
         function toggleRecording() {
@@ -534,16 +611,33 @@
                 mediaRecorder.start();
 
                 isRecording = true;
+                isPaused = false;
                 container.classList.add('is-recording');
-                statusText.innerText = 'REC'; tapeSpeed.innerText = 'REC'; 
+                statusText.innerText = 'REC'; statusText.style.color = '#ff0000';
+                tapeSpeed.innerText = 'REC'; 
+                recDot.style.animation = 'blink 1s step-end infinite'; recDot.style.opacity = '1';
                 btnRecord.classList.add('active'); 
+                
+                btnPause.classList.remove('active-pause');
+                btnPause.innerText = 'PAUSE';
+
             } else {
                 playTapeMechanicalSound('stop');
-                mediaRecorder.stop();
+                
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                }, 500);
+                
                 isRecording = false;
+                isPaused = false;
                 container.classList.remove('is-recording');
-                statusText.innerText = 'STBY'; tapeSpeed.innerText = 'SP';
+                statusText.innerText = 'STBY'; statusText.style.color = '#eee';
+                tapeSpeed.innerText = 'SP';
+                recDot.style.animation = 'none'; recDot.style.opacity = '1';
                 btnRecord.classList.remove('active'); 
+                
+                btnPause.classList.remove('active-pause');
+                btnPause.innerText = 'PAUSE';
             }
         }
 
@@ -561,6 +655,7 @@
                         title: 'Y2K Camcorder Footage'
                     });
                     console.log('Video saved to device.');
+                    triggerSaveSuccess();
                 } catch (error) {
                     console.log('User canceled save or sharing failed.', error);
                 }
@@ -569,7 +664,11 @@
                 const a = document.createElement('a');
                 a.style.display = 'none'; a.href = url; a.download = file.name;
                 document.body.appendChild(a); a.click();
-                setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 100);
+                setTimeout(() => { 
+                    document.body.removeChild(a); 
+                    window.URL.revokeObjectURL(url); 
+                    triggerSaveSuccess();
+                }, 100);
             }
         }
 
