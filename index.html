@@ -32,7 +32,6 @@
 
         .center-screen-area { display: flex; justify-content: center; align-items: center; margin: 0; }
 
-        /* FIXED: Added box-sizing so the container respects the padding and stops bleeding out */
         .screen-bezel {
             background: #111; padding: 20px; border-radius: 8px; width: 100%;
             box-sizing: border-box;
@@ -49,7 +48,6 @@
             box-shadow: inset 10px 0 20px rgba(0,0,0,0.8); z-index: 10;
         }
 
-        /* FIXED: Strict clipping to ensure the video stays inside the box */
         .camcorder-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border-radius: 4px; box-shadow: inset 0 0 10px rgba(0,0,0,1); }
         
         video { position: absolute; opacity: 0; pointer-events: none; }
@@ -79,7 +77,7 @@
         .zoom-fill { position: absolute; background: #fff; transition: all 0.1s; }
         .zoom-digital-line { position: absolute; background: red; z-index: 2; }
         
-        #osd-warnings { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: red; font-size: 32px; display: none; z-index: 15; text-shadow: 2px 2px #000; animation: blink 1s infinite; cursor: pointer; pointer-events: auto; }
+        #osd-warnings { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: red; font-size: 32px; display: none; z-index: 15; text-shadow: 2px 2px #000; animation: blink 1s infinite; cursor: pointer; pointer-events: auto; text-align: center; }
         
         #save-indicator {
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
@@ -108,7 +106,6 @@
         }
         .sleek-btn.active-pause { background: linear-gradient(to bottom, #cca300, #997a00); color: #fff; border-top: 1px solid #ffcc00; }
 
-        /* UPGRADED: Hardware Controls styling */
         .control-group { display: flex; flex-direction: column; align-items: center; width: 60%; margin-bottom: 15px; }
         .control-label { font-size: 10px; color: #aaa; font-family: Arial, sans-serif; margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; text-shadow: 1px 1px 0 #000;}
         
@@ -138,12 +135,12 @@
         
         @media (orientation: landscape) {
             .hardware-body { flex-direction: row; }
-            .left-panel { width: 15%; height: 100%; flex-direction: column; border-right: 4px solid #333; padding: 10px 5px; gap: 15px; }
+            .left-panel { width: 15%; height: 100%; flex-direction: column; border-right: 4px solid #333; padding: 10px 5px; gap: 10px; }
             .center-screen-area { width: 60%; }
             .screen-bezel { height: 85vh; aspect-ratio: 4 / 3; }
             .right-grip { width: 20%; height: 100%; flex-direction: column; border-left: 6px solid #111; border-radius: 40px 0 0 40px; gap: 10px; }
             
-            .sleek-btn { padding: 12px 5px; width: 90%; }
+            .sleek-btn { padding: 10px 5px; width: 90%; }
             .record-wrapper { padding: 6px; }
             .phys-record-btn { width: 42px; height: 42px; }
 
@@ -155,12 +152,12 @@
 
         @media (orientation: portrait) {
             .hardware-body { flex-direction: column; justify-content: space-between; }
-            .left-panel { width: 100%; height: auto; flex-direction: row; border-bottom: 4px solid #333; padding: 10px 5px; gap: 5px; flex-wrap: wrap; justify-content: center; }
+            .left-panel { width: 100%; height: auto; flex-direction: row; border-bottom: 4px solid #333; padding: 10px 5px; gap: 4px; flex-wrap: wrap; justify-content: center; }
             .center-screen-area { width: 100%; flex-grow: 1; padding: 15px 0; }
             .screen-bezel { height: auto; width: 95vw; max-height: 55vh; aspect-ratio: 3 / 4; padding: 15px; }
             .right-grip { width: 100%; height: auto; flex-direction: row; border-top: 6px solid #111; padding: 15px 10px; justify-content: space-around; gap: 0;}
             
-            .sleek-btn { padding: 10px 2px; flex: 1 1 15%; margin: 2px; font-size: 10px; } 
+            .sleek-btn { padding: 8px 2px; flex: 1 1 20%; margin: 2px; font-size: 10px; } 
             
             .control-group { width: 25%; margin-bottom: 0; margin-right: 2%; }
             .vertical-rocker { flex-direction: row; }
@@ -185,6 +182,7 @@
     <div class="hardware-body">
         <div class="left-panel">
             <button class="sleek-btn" id="btn-flip">LENS</button>
+            <button class="sleek-btn" id="btn-flash">FLASH</button> 
             <button class="sleek-btn" id="btn-nightshot">NIGHT</button>
             <button class="sleek-btn" id="btn-date">DATE</button> 
             <button class="sleek-btn" id="btn-pause">PAUSE</button> 
@@ -245,7 +243,6 @@
                 </div>
             </div>
             
-            <!-- NEW BUTTON-BASED FOCUS CONTROL -->
             <div class="control-group" id="focus-control-container" style="display:none;">
                 <span class="control-label">MANUAL FOCUS</span>
                 <div class="horizontal-rocker">
@@ -254,7 +251,6 @@
                 </div>
             </div>
 
-            <!-- NEW BUTTON-BASED EXPOSURE CONTROL -->
             <div class="control-group" id="exp-control-container" style="display:none;">
                 <span class="control-label">EXPOSURE (EV)</span>
                 <div class="horizontal-rocker">
@@ -294,6 +290,7 @@
         const btnZoomIn = document.getElementById('btn-zoom-in');
         const btnZoomOut = document.getElementById('btn-zoom-out');
         const btnFlip = document.getElementById('btn-flip');
+        const btnFlash = document.getElementById('btn-flash'); // NEW FLASH BUTTON
         const btnNightshot = document.getElementById('btn-nightshot');
         const btnDate = document.getElementById('btn-date'); 
         const btnPause = document.getElementById('btn-pause');
@@ -339,6 +336,8 @@
         let isManualExp = false;
         let expInterval;
 
+        let isFlashOn = false; // FLASH STATE
+
         let isGlitching = false;
         let isBlueScreen = false;
         
@@ -355,6 +354,11 @@
         
         btnFlip.addEventListener('click', async () => { 
             if(rawStream) {
+                // RESET FLASH WHEN SWITCHING LENS
+                isFlashOn = false;
+                btnFlash.classList.remove('active');
+                btnFlash.style.color = '#eee';
+
                 rawStream.getTracks().forEach(track => track.stop());
                 facingMode = facingMode === "environment" ? "user" : "environment";
                 await startCamera();
@@ -362,6 +366,39 @@
         });
 
         osdWarnings.addEventListener('click', () => { osdWarnings.style.display = 'none'; });
+
+        // ----------------------------------------------------
+        // FLASH TOGGLE LOGIC
+        // ----------------------------------------------------
+        btnFlash.addEventListener('click', async () => {
+            if(!rawStream) return;
+            const track = rawStream.getVideoTracks()[0];
+            
+            try {
+                isFlashOn = !isFlashOn;
+                await track.applyConstraints({
+                    advanced: [{ torch: isFlashOn }]
+                });
+                
+                if (isFlashOn) {
+                    btnFlash.classList.add('active');
+                    btnFlash.style.color = '#ffeb3b';
+                } else {
+                    btnFlash.classList.remove('active');
+                    btnFlash.style.color = '#eee';
+                }
+            } catch (err) {
+                // HARDWARE CHECK: If no torch is available (e.g., front camera)
+                isFlashOn = false;
+                btnFlash.classList.remove('active');
+                btnFlash.style.color = '#eee';
+                
+                osdWarnings.innerText = 'NO FLASH';
+                osdWarnings.style.display = 'block';
+                setTimeout(() => { osdWarnings.style.display = 'none'; }, 2000);
+            }
+            playTapeMechanicalSound('click');
+        });
 
         btnPause.addEventListener('click', () => {
             if (!isRecording || !mediaRecorder) return;
@@ -410,9 +447,6 @@
             playTapeMechanicalSound('click');
         });
 
-        // ----------------------------------------------------
-        // FOCUS & EXPOSURE TOGGLE LOGIC
-        // ----------------------------------------------------
         btnFocus.addEventListener('click', () => {
             if(!rawStream) return;
             isManualFocus = !isManualFocus;
@@ -466,12 +500,9 @@
             noiseLayer.style.opacity = (baseNoise + addedNoise).toString();
         }
 
-        // ----------------------------------------------------
-        // BUTTON HOLD/ROCKER LOGIC
-        // ----------------------------------------------------
         function startButtonHold(type, direction) {
             if (!rawStream) return;
-            toggleZoomMotor(true); // Re-using motor sound for all lens adjustments to feel mechanical
+            toggleZoomMotor(true); 
             
             if (type === 'zoom') {
                 if (zoomInterval) clearInterval(zoomInterval);
@@ -513,7 +544,6 @@
             if (type === 'exp' && expInterval) clearInterval(expInterval);
         }
 
-        // Attach hold events to Zoom
         ['mousedown', 'touchstart'].forEach(evt => {
             btnZoomIn.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('zoom', 'in'); });
             btnZoomOut.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('zoom', 'out'); });
@@ -523,7 +553,6 @@
             btnZoomOut.addEventListener(evt, () => stopButtonHold('zoom'));
         });
 
-        // Attach hold events to Focus
         ['mousedown', 'touchstart'].forEach(evt => {
             btnFocusNear.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('focus', 'near'); });
             btnFocusFar.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('focus', 'far'); });
@@ -533,7 +562,6 @@
             btnFocusFar.addEventListener(evt, () => stopButtonHold('focus'));
         });
 
-        // Attach hold events to Exposure
         ['mousedown', 'touchstart'].forEach(evt => {
             btnExpDown.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('exp', 'down'); });
             btnExpUp.addEventListener(evt, (e) => { e.preventDefault(); startButtonHold('exp', 'up'); });
@@ -542,8 +570,6 @@
             btnExpDown.addEventListener(evt, () => stopButtonHold('exp'));
             btnExpUp.addEventListener(evt, () => stopButtonHold('exp'));
         });
-
-        // ----------------------------------------------------
 
         setInterval(() => {
             const chance = Math.random();
@@ -826,7 +852,6 @@
                 playTapeMechanicalSound('start');
 
                 recordedChunks = [];
-                // FIXED: Safari anti-freeze chunking (250ms interval)
                 const canvasStream = canvas.captureStream(15);
                 
                 const audioTracks = processedAudioDestination.stream.getAudioTracks();
@@ -836,7 +861,6 @@
                 mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
                 mediaRecorder.onstop = exportVideo;
                 
-                // FIXED: Requesting chunks every 250ms prevents Safari memory crash
                 mediaRecorder.start(250);
 
                 isRecording = true;
