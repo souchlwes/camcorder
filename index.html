@@ -985,36 +985,58 @@
             }
         }
 
-        async function exportVideo() {
-            const mimeType = mediaRecorder.mimeType || 'video/webm';
-            const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+       async function exportVideo() {
+            // Force Android to prefer mp4 if possible, otherwise fallback to webm
+            let mimeType = 'video/webm';
+            if (MediaRecorder.isTypeSupported('video/mp4')) {
+                mimeType = 'video/mp4';
+            } else if (mediaRecorder.mimeType) {
+                mimeType = mediaRecorder.mimeType;
+            }
             
+            const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+            const filename = `Y2K_CAM_${Date.now()}.${ext}`;
             const blob = new Blob(recordedChunks, { type: mimeType });
-            const file = new File([blob], `Y2K_CAM_${Date.now()}.${ext}`, { type: mimeType });
+            const file = new File([blob], filename, { type: mimeType });
 
+            // 1. First try the native Share API (Best for iOS)
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
                     await navigator.share({
                         files: [file],
                         title: 'Y2K Camcorder Footage'
                     });
-                    console.log('Video saved to device.');
+                    console.log('Video shared/saved via native API.');
                     triggerSaveSuccess();
+                    return; // Exit if share was successful
                 } catch (error) {
-                    console.log('User canceled save or sharing failed.', error);
+                    console.log('User canceled native share or it failed. Falling back to direct download.', error);
                 }
-            } else {
+            } 
+            
+            // 2. Fallback: Direct Download Anchor (Best for Android Web Apps)
+            try {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.style.display = 'none'; a.href = url; a.download = file.name;
-                document.body.appendChild(a); a.click();
+                a.style.display = 'none'; 
+                a.href = url; 
+                a.download = filename;
+                document.body.appendChild(a); 
+                
+                // Triggering a click programmatically
+                a.click();
+                
                 setTimeout(() => { 
                     document.body.removeChild(a); 
                     window.URL.revokeObjectURL(url); 
                     triggerSaveSuccess();
-                }, 100);
+                }, 200);
+            } catch (err) {
+                console.error("Failed to force download: ", err);
+                alert("Could not save video automatically. Please check your browser permissions.");
             }
         }
+        
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
