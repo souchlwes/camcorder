@@ -73,7 +73,6 @@
         .top-left { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
         .top-right { position: absolute; top: 15px; right: 15px; text-align: right; }
         .bottom-left { position: absolute; bottom: 15px; left: 15px; color: #ffeb3b; }
-        .bottom-right { position: absolute; bottom: 15px; right: 15px; color: #ffeb3b; }
         
         .status-row { display: flex; align-items: center; }
         .rec-dot { width: 12px; height: 12px; background-color: #ff0000; border-radius: 50%; margin-right: 8px; display: none; }
@@ -235,7 +234,6 @@
                         </div>
 
                         <div class="bottom-left"><span id="tape-speed">SP</span></div>
-                        <div class="bottom-right" id="timestamp"></div>
                     </div>
                 </div>
                 <div class="brand-logo">DIGITAL HANDYCAM</div>
@@ -292,7 +290,6 @@
         const tapeSpeed = document.getElementById('tape-speed');
         const nsOverlay = document.getElementById('ns-overlay');
         const noiseLayer = document.getElementById('noise-layer');
-        const timestampDiv = document.getElementById('timestamp'); 
         const osdWarnings = document.getElementById('osd-warnings');
         const saveIndicator = document.getElementById('save-indicator');
         const zoomBar = document.getElementById('zoom-bar');
@@ -354,7 +351,7 @@
         
         let facingMode = "environment"; 
         let isNightShot = false;
-        let showDate = true; 
+        let showDate = false; // Turned off by default now
 
         startScreen.addEventListener('click', async () => { 
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -448,8 +445,13 @@
         btnDate.addEventListener('click', () => {
             if(!rawStream) return;
             showDate = !showDate;
-            timestampDiv.style.display = showDate ? 'block' : 'none';
-            btnDate.classList.toggle('active');
+            if (showDate) {
+                btnDate.classList.add('active');
+                btnDate.style.color = '#ffeb3b';
+            } else {
+                btnDate.classList.remove('active');
+                btnDate.style.color = '#eee';
+            }
             playTapeMechanicalSound('click');
         });
 
@@ -543,7 +545,7 @@
         // ----------------------------------------------------
         function stepValue(type, direction) {
             if (type === 'zoom') {
-                const step = 0.04; // Smoother zoom speed
+                const step = 0.015; // Much slower, cinematic zoom speed
                 if (direction === 'in') currentZoom = Math.min(currentZoom + step, maxZoom);
                 else currentZoom = Math.max(currentZoom - step, 1.0);
                 
@@ -578,7 +580,6 @@
             
             stopButtonHold(type); // clear existing intervals
             
-            // Increased interval from 30ms to 50ms so it doesn't fly out of control
             if (type === 'zoom') zoomInterval = setInterval(() => stepValue(type, direction), 50);
             else if (type === 'focus') focusInterval = setInterval(() => stepValue(type, direction), 50);
             else if (type === 'exp') expInterval = setInterval(() => stepValue(type, direction), 50);
@@ -879,6 +880,40 @@
 
                 ctx.globalAlpha = 1.0;
                 ctx.globalCompositeOperation = 'source-over';
+
+                // --- NEW: BURN-IN CANVAS TIMESTAMP ---
+                if (showDate) {
+                    const now = new Date();
+                    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                    let h = now.getHours();
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    h = h ? h : 12;
+                    const pad = (num) => String(num).padStart(2, '0');
+                    
+                    const timeStr = `${ampm} ${h}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                    const dateStr = `${months[now.getMonth()]} ${pad(now.getDate())} ${now.getFullYear()}`;
+
+                    ctx.fillStyle = '#ffae42'; // Classic bright camcorder orange/yellow
+                    const fontSize = isPortrait ? 16 : 14; 
+                    ctx.font = `${fontSize}px "VT323", monospace`; 
+                    ctx.textAlign = 'right';
+                    
+                    ctx.shadowColor = '#000';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+
+                    const paddingRight = 10;
+                    const paddingBottom = 10;
+                    const lineSpacing = fontSize + 2;
+
+                    ctx.fillText(timeStr, canvas.width - paddingRight, canvas.height - paddingBottom - lineSpacing);
+                    ctx.fillText(dateStr, canvas.width - paddingRight, canvas.height - paddingBottom);
+                    
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                }
             }
         }
 
@@ -969,14 +1004,6 @@
                 }, 100);
             }
         }
-
-        function updateTimestamp() {
-            const now = new Date();
-            const pad = (num) => String(num).padStart(2, '0');
-            timestampDiv.innerText = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-        }
-
-        setInterval(updateTimestamp, 1000); updateTimestamp();
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
