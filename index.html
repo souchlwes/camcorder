@@ -831,12 +831,12 @@
                 }
                 
 
-                offscreenCanvas.width = isPortrait ? 20 : 30;
-                offscreenCanvas.height = isPortrait ? 30 : 20;
+                offscreenCanvas.width = isPortrait ? 30 : 40;
+                offscreenCanvas.height = isPortrait ? 40 : 30;
                 offCtx.drawImage(videoElement, sx, sy, sWidth, sHeight, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
                 
                 ctx.globalCompositeOperation = 'screen';
-                ctx.globalAlpha = 0.45; 
+                ctx.globalAlpha = 0.20; 
                 ctx.imageSmoothingEnabled = true; 
                 ctx.webkitImageSmoothingEnabled = true;
                 ctx.drawImage(offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0, -5, canvas.width, canvas.height + 10);
