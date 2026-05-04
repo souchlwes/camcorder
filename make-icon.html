@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Proper Camcorder Icon</title>
+    <style>
+        body { background: #111; color: #fff; font-family: sans-serif; text-align: center; padding-top: 50px; }
+    </style>
+</head>
+<body>
+    <p>Generating your proper vector camcorder...</p>
+    <script>
+        const canvas = document.createElement('canvas');
+        canvas.width = 192;
+        canvas.height = 192;
+        const ctx = canvas.getContext('2d');
+
+        // 1. Pitch black background
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, 192, 192);
+
+        // 2. Setup crisp white vector lines
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 6;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        // 3. Main Camera Body
+        ctx.beginPath();
+        ctx.roundRect(70, 80, 70, 50, 6); // x, y, width, height, radii
+        ctx.stroke();
+
+        // 4. Lens Hood (Protruding Left)
+        ctx.beginPath();
+        ctx.moveTo(70, 85);
+        ctx.lineTo(35, 75);  // Flares up
+        ctx.lineTo(35, 135); // Front glass edge
+        ctx.lineTo(70, 125); // Flares down
+        ctx.closePath();
+        ctx.stroke();
+
+        // 5. Viewfinder (Top Right / Back)
+        ctx.beginPath();
+        ctx.roundRect(115, 60, 40, 20, 6);
+        ctx.stroke();
+        
+        // 6. Viewfinder Rubber Eye-Cup
+        ctx.beginPath();
+        ctx.moveTo(155, 60);
+        ctx.lineTo(168, 55);
+        ctx.lineTo(168, 85);
+        ctx.lineTo(155, 80);
+        ctx.closePath();
+        ctx.stroke();
+
+        // 7. Top Microphone
+        ctx.beginPath();
+        ctx.roundRect(75, 65, 25, 15, 4);
+        ctx.stroke();
+
+        // 8. Folded LCD Screen Detail (On the side)
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.roundRect(80, 90, 40, 30, 4);
+        ctx.stroke();
+
+        // 9. Side Hand-Strap (Curving out the back)
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(140, 120);
+        ctx.quadraticCurveTo(165, 105, 140, 90); // Arcs outward
+        ctx.stroke();
+
+        // 10. Automatically download
+        const link = document.createElement('a');
+        link.download = 'apple-touch-icon.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        document.body.innerHTML = '<h2>🎥 Fixed Vector Icon downloaded!</h2><p>Move it to your project folder and check it out.</p>';
+    </script>
+</body>
+</html>
